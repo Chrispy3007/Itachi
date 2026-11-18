@@ -275,48 +275,62 @@ async function loadYouTubeFormats(url,container,state,detail){
  }
 }
 async function downloadYouTubeFormat(url,format,button,state,detail){
- let handle=null;
+ let handle=null,jobId=null,cancelRequested=false;
  if(window.isSecureContext&&typeof window.showSaveFilePicker==="function"){
    try{handle=await window.showSaveFilePicker({suggestedName:"youtube-video."+(format.ext||"mp4")});}
    catch(error){if(error&&error.name==="AbortError")return;}
  }
- button.disabled=true;button.textContent="Starting…";state.textContent="Downloading";
+ button.disabled=true;button.textContent="Starting…";state.textContent="Preparing download";
+ const cancel=document.createElement("button");
+ cancel.type="button";cancel.className="secondary";cancel.textContent="Cancel download";
+ cancel.style.cssText="margin-top:10px;padding:8px 11px;font-size:9px";
+ detail.parentElement.append(cancel);
+ cancel.addEventListener("click",async()=>{
+   cancelRequested=true;cancel.disabled=true;cancel.textContent="Cancelling…";
+   if(jobId){try{await fetch(ITACHI_API_BASE+"/api/youtube/jobs/"+encodeURIComponent(jobId)+"/cancel",{method:"POST"});}catch{}}
+ });
  try{
-   const response=await fetch(ITACHI_API_BASE+"/api/youtube/download",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,format_id:format.format_id})});
-   if(!response.ok){
-     let message="The download could not be started.";
-     try{const body=await response.json();message=body.detail||message;}catch{}
-     throw new Error(message);
+   const created=await fetch(ITACHI_API_BASE+"/api/youtube/jobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,format_id:format.format_id})});
+   const createdData=await created.json();
+   if(!created.ok)throw new Error(createdData.detail||"The download could not be queued.");
+   jobId=createdData.id;
+   if(cancelRequested){await fetch(ITACHI_API_BASE+"/api/youtube/jobs/"+encodeURIComponent(jobId)+"/cancel",{method:"POST"});throw new Error("Download cancelled.");}
+   let job;
+   while(true){
+     await new Promise(resolve=>setTimeout(resolve,1000));
+     const response=await fetch(ITACHI_API_BASE+"/api/youtube/jobs/"+encodeURIComponent(jobId),{cache:"no-store"});
+     const data=await response.json();
+     if(!response.ok)throw new Error(data.detail||"The download job could not be found.");
+     job=data;
+     state.textContent=job.status==="working"?(job.stage||"Downloading…"):job.status==="queued"?"Waiting in download queue…":job.status==="ready"?"Ready to save":job.status;
+     detail.textContent=job.progress===null||job.progress===undefined?(job.engine?"Extractor: "+job.engine:"Preparing the selected format…"):(job.progress+"% complete");
+     if(job.status==="ready"||job.status==="error"||job.status==="cancelled")break;
    }
-   if(!response.body||!response.body.getReader())throw new Error("This browser cannot stream the download.");
-   const reader=response.body.getReader();
-   let received=0;
-   const total=Number(response.headers.get("content-length"))||0;
+   if(job.status!=="ready")throw new Error(job.error||"The download did not complete.");
+   const response=await fetch(ITACHI_API_BASE+"/api/youtube/jobs/"+encodeURIComponent(jobId)+"/file",{cache:"no-store"});
+   if(!response.ok)throw new Error("The completed file could not be retrieved.");
+   const filename=job.filename||"youtube-video."+(format.ext||"mp4");
    if(handle){
      const writable=await handle.createWritable();
      try{
-       while(true){
-         const part=await reader.read();if(part.done)break;
-         await writable.write(part.value);received+=part.value.byteLength;
-         detail.textContent=formatBytes(received)+(total?" of "+formatBytes(total):" downloaded");
-       }
+       const reader=response.body.getReader();
+       while(true){const part=await reader.read();if(part.done)break;await writable.write(part.value);}
        await writable.close();
      }catch(error){try{await writable.abort();}catch{}throw error;}
    }else{
-     const chunks=[];
-     while(true){
-       const part=await reader.read();if(part.done)break;
-       chunks.push(part.value);received+=part.value.byteLength;
-       detail.textContent=formatBytes(received)+" received";
-     }
-     const blob=new Blob(chunks,{type:response.headers.get("content-type")||"application/octet-stream"});
+     const blob=await response.blob();
      const objectUrl=URL.createObjectURL(blob);
-     const link=document.createElement("a");link.href=objectUrl;link.download="youtube-video."+(format.ext||"mp4");link.style.display="none";
+     const link=document.createElement("a");link.href=objectUrl;link.download=filename;link.style.display="none";
      document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
    }
-   state.textContent="Download complete";detail.textContent=formatBytes(received)+" saved to your device.";
- }catch(error){state.textContent="Download failed";detail.textContent=error.message||"The download failed.";}
- finally{button.disabled=false;button.textContent="Download";}
+   state.textContent="Download complete";
+   detail.textContent=formatBytes(job.size||0)+" saved to your device. Temporary server copy expires automatically.";
+ }catch(error){
+   state.textContent=cancelRequested?"Download cancelled":"Download failed";
+   detail.textContent=error.message||"The download failed.";
+ }finally{
+   cancel.remove();button.disabled=false;button.textContent="Download";
+ }
 }
 function getYouTubeId(url){
  const h=url.hostname.toLowerCase();
