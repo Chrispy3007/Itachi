@@ -113,9 +113,19 @@ def download_with_engine(url: str, resolved: dict, temp_dir: str) -> Path:
 
 
 def engine_health() -> dict:
+    node = shutil.which("node")
+    script = Path(__file__).resolve().parent / "youtubejs.mjs"
+    package_ready = False
+    if node and script.is_file():
+        check = subprocess.run(
+            [node, "--input-type=module", "-e", "import('youtubei.js')"],
+            capture_output=True, text=True, timeout=15, check=False,
+            cwd=Path(__file__).resolve().parents[1],
+        )
+        package_ready = check.returncode == 0
     return {
         "yt_dlp": {"available": importlib.util.find_spec("yt_dlp") is not None},
-        "youtubejs": {"available": shutil.which("node") is not None and (Path(__file__).resolve().parent / "youtubejs.mjs").is_file()},
+        "youtubejs": {"available": package_ready, "node": node},
         "newpipe": {"available": False, "reason": "Isolated adapter not installed yet."},
         "cobalt": {"available": False, "configured": bool(os.getenv("COBALT_API_URL")), "reason": "Remote Cobalt adapter is not wired yet."},
     }
