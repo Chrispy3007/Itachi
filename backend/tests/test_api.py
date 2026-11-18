@@ -46,7 +46,7 @@ def test_youtube_inspect_returns_format_catalog():
         "formats": [{"format_id": "18", "ext": "mp4", "resolution": "360p", "filesize": 1234}],
         "message": "Available video formats.",
     }
-    with patch("main.inspect_youtube", return_value=sample):
+    with patch("main.inspect_with_fallback", return_value=sample):
         response = client.post("/api/youtube/inspect", json={"url": "https://youtu.be/abcdefghijk"})
     assert response.status_code == 200
     assert response.json()["formats"][0]["format_id"] == "18"
@@ -91,7 +91,7 @@ def test_youtube_inspect_rejects_non_youtube_url():
 
 
 def test_youtube_download_rejects_unlisted_format():
-    with patch("main.resolve_download", side_effect=ValueError("That format is not available.")):
+    with patch("main.resolve_download_with_fallback", side_effect=ValueError("That format is not available.")):
         response = client.post(
             "/api/youtube/download",
             json={"url": "https://youtu.be/abcdefghijk", "format_id": "999"},
@@ -110,3 +110,17 @@ def test_github_pages_origin_is_allowed():
     )
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "https://chrispy3007.github.io"
+
+
+
+def test_youtube_job_endpoints_report_missing_job():
+    response = client.get("/api/youtube/jobs/not-a-real-job")
+    assert response.status_code == 404
+
+
+def test_youtube_job_creation_rejects_invalid_format():
+    response = client.post(
+        "/api/youtube/jobs",
+        json={"url": "https://youtu.be/abcdefghijk", "format_id": ""},
+    )
+    assert response.status_code == 422
