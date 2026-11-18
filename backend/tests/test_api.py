@@ -3,6 +3,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from main import app
+from services.youtube import inspect_youtube, resolve_download
 
 
 client = TestClient(app)
@@ -39,12 +40,45 @@ def test_youtube_inspect_returns_format_catalog():
         "status": "available",
         "title": "Example video",
         "formats": [{"format_id": "18", "ext": "mp4", "resolution": "360p", "filesize": 1234}],
-        "message": "Only combined formats are listed.",
+        "message": "Available video formats.",
     }
     with patch("main.inspect_youtube", return_value=sample):
         response = client.post("/api/youtube/inspect", json={"url": "https://youtu.be/abcdefghijk"})
     assert response.status_code == 200
     assert response.json()["formats"][0]["format_id"] == "18"
+
+
+def test_inspect_includes_adaptive_video_only_formats():
+    info = {
+        "id": "abcdefghijk",
+        "title": "Example video",
+        "formats": [
+            {"format_id": "137", "ext": "mp4", "height": 1080, "fps": 30, "vcodec": "avc1", "acodec": "none", "protocol": "https", "filesize": 5000},
+            {"format_id": "18", "ext": "mp4", "height": 360, "vcodec": "avc1", "acodec": "mp4a", "protocol": "https", "filesize": 1000},
+            {"format_id": "140", "ext": "m4a", "vcodec": "none", "acodec": "mp4a", "protocol": "https"},
+            {"format_id": "999", "ext": "mp4", "height": 2160, "vcodec": "av01", "acodec": "none", "protocol": "https", "has_drm": True},
+        ],
+    }
+    with patch("services.youtube._extract_info", return_value=info), patch("services.youtube.validate_youtube_url", return_value="https://youtu.be/abcdefghijk"):
+        result = inspect_youtube("https://youtu.be/abcdefghijk")
+    assert [item["format_id"] for item in result["formats"]] == ["137", "18"]
+    assert result["formats"][0]["needs_merge"] is True
+    assert result["formats"][0]["ext"] == "mkv"
+    assert result["formats"][1]["needs_merge"] is False
+
+
+def test_resolve_adaptive_format_pairs_best_audio():
+    info = {
+        "id": "abcdefghijk",
+        "title": "Example video",
+        "formats": [
+            {"format_id": "137", "ext": "mp4", "height": 1080, "vcodec": "avc1", "acodec": "none", "protocol": "https"},
+        ],
+    }
+    with patch("services.youtube._extract_info", return_value=info), patch("services.youtube.validate_youtube_url", return_value="https://youtu.be/abcdefghijk"):
+        resolved = resolve_download("https://youtu.be/abcdefghijk", "137")
+    assert resolved["format_selector"] == "137+bestaudio/best"
+    assert resolved["format"]["needs_merge"] is True
 
 
 def test_youtube_inspect_rejects_non_youtube_url():
