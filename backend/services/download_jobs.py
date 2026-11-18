@@ -55,7 +55,10 @@ def _run(job: dict, url: str, format_id: str) -> None:
         job.update(status="cancelled", stage="cancelled", error=str(exc), updated_at=time.time())
         shutil.rmtree(job["directory"], ignore_errors=True)
     except Exception as exc:
-        job.update(status="error", stage="failed", error=str(exc)[-500:], updated_at=time.time())
+        if job["cancel"].is_set():
+            job.update(status="cancelled", stage="cancelled", error="Download cancelled.", updated_at=time.time())
+        else:
+            job.update(status="error", stage="failed", error=str(exc)[-500:], updated_at=time.time())
         shutil.rmtree(job["directory"], ignore_errors=True)
     finally:
         job.pop("process", None)
