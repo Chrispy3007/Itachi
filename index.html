@@ -9,7 +9,9 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 :root{color-scheme:dark;--bg:#0b0a0d;--surface:#121015;--surface2:#17131a;--line:#29232b;--line2:#49303a;--red:#d84a5b;--red2:#f07882;--text:#f4eff1;--muted:#9b9098;--soft:#c7bac0}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}button,input{font:inherit}.shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr)}aside{background:#0e0c10;border-right:1px solid var(--line);padding:26px 17px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:11px;padding:0 5px 42px}.mark{width:39px;height:39px;border:1px solid #73303b;border-radius:50%;overflow:hidden;box-shadow:0 0 18px #b72e4030;transition:box-shadow .3s,transform .3s}.mark:hover{box-shadow:0 0 26px #e34c60a0;transform:scale(1.06)}.sharingan-svg{width:100%;height:100%;display:block}.sharingan-spin{transform-origin:50% 50%}.sharingan-logo:hover .sharingan-spin{animation:spin 1.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.brand-name{font:800 17px Manrope;letter-spacing:2px}.brand-name small{display:block;color:#947e86;font:600 8px 'DM Sans';letter-spacing:2px;margin-top:2px}.nav-label{font-size:9px;color:#6f646c;letter-spacing:1.8px;padding:0 10px 10px}.nav-item{display:flex;gap:10px;align-items:center;padding:11px 10px;border:1px solid transparent;border-radius:7px;color:#e6dce0;font-size:11px;background:#1b1117;border-color:#38212a}.nav-glyph{color:var(--red2)}.aside-note{margin-top:auto;border-top:1px solid var(--line);padding:16px 7px 0;color:#837780;font-size:10px;line-height:1.7}.aside-note strong{color:#c9b9c0;font-weight:600}.main{min-width:0}.topbar{height:66px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,64px);color:var(--muted);font-size:10px}.status{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:30px;padding:7px 11px;font-size:9px;letter-spacing:1px;color:#c6b7be}.status i{width:6px;height:6px;border-radius:50%;background:#b84b5b;box-shadow:0 0 9px #d84a5b}.content{max-width:930px;margin:0 auto;padding:65px clamp(20px,5vw,64px) 30px}.kicker{color:#b68d98;font-size:9px;letter-spacing:2.2px;font-weight:700}.kicker span{color:var(--red2)}h1{font:800 clamp(34px,4.8vw,53px)/1.12 Manrope;letter-spacing:-2px;margin:16px 0 10px}h1 em{font-style:normal;color:var(--red2)}.intro{color:var(--muted);font-size:12px;line-height:1.7;max-width:540px;margin:0 0 34px}.panel{border:1px solid var(--line);border-radius:12px;background:linear-gradient(145deg,#17131a,#110f13);padding:24px;box-shadow:0 18px 55px #0003}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:19px}.panel h2{font:700 14px Manrope;margin:0 0 5px}.panel-head p{font-size:10px;color:var(--muted);margin:0}.eye{width:44px;height:44px;flex:none;border:1px solid #572632;border-radius:50%;overflow:hidden;box-shadow:0 0 16px #bd30402a;transition:box-shadow .3s,transform .3s}.eye:hover{box-shadow:0 0 25px #e34c6077;transform:scale(1.05)}.input-wrap{display:flex;align-items:center;gap:10px;background:#0b090d;border:1px solid #332832;border-radius:8px;padding:6px 7px 6px 13px;transition:border-color .2s,box-shadow .2s}.input-wrap:focus-within{border-color:#98505d;box-shadow:0 0 0 3px #d84a5b15}.link-icon{color:#a7838d;font-size:15px}.input-wrap input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:11px;padding:11px 0}.input-wrap input::placeholder{color:#71656d}.primary{border:0;border-radius:6px;padding:12px 16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s,transform .2s,box-shadow .2s}.primary:hover{background:#ec5969;transform:translateY(-1px);box-shadow:0 5px 18px #d84a5b44}.primary:disabled{opacity:.6;cursor:wait}.formats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:17px}.formats-label{font-size:9px;color:#80747c;letter-spacing:1px;margin-right:4px}.format{font-size:9px;color:#c3b6bd;border:1px solid var(--line);border-radius:5px;padding:6px 9px;background:#100e12}.format b{color:var(--red2);font-weight:600;margin-right:4px}.result{display:none;margin-top:16px;border:1px solid var(--line2);background:#171116;border-radius:8px;padding:14px;font-size:10px;line-height:1.6;color:#d9cbd0;overflow-wrap:anywhere}.result.show{display:block;animation:rise .25s ease}@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.result strong{display:block;color:#f4e9ed;font:700 12px Manrope;margin-bottom:4px}.result small{display:block;color:#94838b;margin-top:7px}.section-head{display:flex;justify-content:space-between;align-items:end;margin:35px 0 13px}.section-head h2{font:700 13px Manrope;margin:0 0 5px}.section-head p{color:var(--muted);font-size:10px;margin:0}.count{color:#a98d96;border:1px solid var(--line);border-radius:20px;padding:6px 9px;font-size:8px;letter-spacing:1px}.platforms{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.platform{border:1px solid var(--line);border-radius:8px;background:#111015;padding:13px 12px;transition:border-color .2s,transform .2s,background .2s}.platform:hover{border-color:#74404a;background:#171117;transform:translateY(-2px)}.platform-icon{width:27px;height:27px;border-radius:7px;background:#21151b;color:#df8490;display:grid;place-items:center;font-size:14px;margin-bottom:12px}.platform b{display:block;font:700 10px Manrope}.platform small{display:block;color:#847780;font-size:8px;margin-top:4px;line-height:1.4}.note{margin-top:23px;padding:13px 15px;border-left:2px solid #8f3a48;background:#131015;color:#94868e;font-size:9px;line-height:1.7}.note strong{color:#d9cbd0;font-weight:600}footer{border-top:1px solid var(--line);margin-top:31px;padding-top:14px;color:#71666e;font-size:8px;letter-spacing:1.3px}footer span{color:#bd4757}.right{float:right}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}button,input{font:inherit}.shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr)}aside{background:#0e0c10;border-right:1px solid var(--line);padding:26px 17px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:11px;padding:0 5px 42px}.mark{width:39px;height:39px;border:1px solid #73303b;border-radius:50%;overflow:hidden;box-shadow:0 0 18px #b72e4030;transition:box-shadow .3s,transform .3s}.mark:hover{box-shadow:0 0 26px #e34c60a0;transform:scale(1.06)}.sharingan-svg{width:100%;height:100%;display:block}.sharingan-spin{transform-origin:50% 50%}.sharingan-logo:hover .sharingan-spin{animation:spin 1.8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.brand-name{font:800 17px Manrope;letter-spacing:2px}.brand-name small{display:block;color:#947e86;font:600 8px 'DM Sans';letter-spacing:2px;margin-top:2px}.nav-label{font-size:9px;color:#6f646c;letter-spacing:1.8px;padding:0 10px 10px}.nav-item{display:flex;gap:10px;align-items:center;padding:11px 10px;border:1px solid transparent;border-radius:7px;color:#e6dce0;font-size:11px;background:#1b1117;border-color:#38212a}.nav-glyph{color:var(--red2)}.aside-note{margin-top:auto;border-top:1px solid var(--line);padding:16px 7px 0;color:#837780;font-size:10px;line-height:1.7}.aside-note strong{color:#c9b9c0;font-weight:600}.main{min-width:0}.topbar{height:66px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,64px);color:var(--muted);font-size:10px}.status{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:30px;padding:7px 11px;font-size:9px;letter-spacing:1px;color:#c6b7be}.status i{width:6px;height:6px;border-radius:50%;background:#b84b5b;box-shadow:0 0 9px #d84a5b}.content{max-width:930px;margin:0 auto;padding:65px clamp(20px,5vw,64px) 30px}.kicker{color:#b68d98;font-size:9px;letter-spacing:2.2px;font-weight:700}.kicker span{color:var(--red2)}h1{font:800 clamp(34px,4.8vw,53px)/1.12 Manrope;letter-spacing:-2px;margin:16px 0 10px}h1 em{font-style:normal;color:var(--red2)}.intro{color:var(--muted);font-size:12px;line-height:1.7;max-width:540px;margin:0 0 34px}.panel{border:1px solid var(--line);border-radius:12px;background:linear-gradient(145deg,#17131a,#110f13);padding:24px;box-shadow:0 18px 55px #0003}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:19px}.panel h2{font:700 14px Manrope;margin:0 0 5px}.panel-head p{font-size:10px;color:var(--muted);margin:0}.eye{width:44px;height:44px;flex:none;border:1px solid #572632;border-radius:50%;overflow:hidden;box-shadow:0 0 16px #bd30402a;transition:box-shadow .3s,transform .3s}.eye:hover{box-shadow:0 0 25px #e34c6077;transform:scale(1.05)}.input-wrap{display:flex;align-items:center;gap:10px;background:#0b090d;border:1px solid #332832;border-radius:8px;padding:6px 7px 6px 13px;transition:border-color .2s,box-shadow .2s}.input-wrap:focus-within{border-color:#98505d;box-shadow:0 0 0 3px #d84a5b15}.link-icon{color:#a7838d;font-size:15px}.input-wrap input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--text);font-size:11px;padding:11px 0}.input-wrap input::placeholder{color:#71656d}.primary{border:0;border-radius:6px;padding:12px 16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s,transform .2s,box-shadow .2s}.primary:hover{background:#ec5969;transform:translateY(-1px);box-shadow:0 5px 18px #d84a5b44}.primary:disabled{opacity:.6;cursor:wait}.formats{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:17px}.formats-label{font-size:9px;color:#80747c;letter-spacing:1px;margin-right:4px}.format{font-size:9px;color:#c3b6bd;border:1px solid var(--line);border-radius:5px;padding:6px 9px;background:#100e12}.format b{color:var(--red2);font-weight:600;margin-right:4px}.result{display:none;margin-top:16px;border:1px solid var(--line2);background:#171116;border-radius:8px;padding:14px;font-size:10px;line-height:1.6;color:#d9cbd0;overflow-wrap:anywhere}.result.show{display:block;animation:rise .25s ease}@keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.result strong{display:block;color:#f4e9ed;font:700 12px Manrope;margin-bottom:4px}.result small{display:block;color:#94838b;margin-top:7px}.section-head{display:flex;justify-content:space-between;align-items:end;margin:35px 0 13px}.section-head h2{font:700 13px Manrope;margin:0 0 5px}.section-head p{color:var(--muted);font-size:10px;margin:0}.count{color:#a98d96;border:1px solid var(--line);border-radius:20px;padding:6px 9px;font-size:8px;letter-spacing:1px}.platforms{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.platform{border:1px solid var(--line);border-radius:8px;background:#111015;padding:13px 12px;transition:border-color .2s,transform .2s,background .2s}.platform:hover{border-color:#74404a;background:#171117;transform:translateY(-2px)}.platform-icon{width:27px;height:27px;border-radius:7px;background:#21151b;color:#df8490;display:grid;place-items:center;font-size:14px;margin-bottom:12px}.platform b{display:block;font:700 10px Manrope}.platform small{display:block;color:#847780;font-size:8px;margin-top:4px;line-height:1.4}.note{margin-top:23px;padding:13px 15px;border-left:2px solid #8f3a48;background:#131015;color:#94868e;font-size:9px;line-height:1.7}.note strong{color:#d9cbd0;font-weight:600}
+.converter{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}.converter-title{font:700 12px Manrope;margin:0 0 5px}.converter-copy{font-size:9px;color:var(--muted);line-height:1.6;margin:0 0 14px}.converter-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;margin-top:12px}.field-label{display:block;color:#9b8c94;font-size:9px;margin:0 0 6px;letter-spacing:.5px}.converter input[type=file],.converter select{width:100%;min-width:0;background:#0b090d;border:1px solid #332832;border-radius:6px;color:var(--text);padding:10px;font-size:10px}.converter input[type=file]{padding:8px}.converter-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:13px}.secondary{border:1px solid #69404a;border-radius:6px;padding:11px 14px;background:#21151b;color:#f2dce1;font-size:10px;font-weight:700;cursor:pointer}.secondary:disabled{opacity:.45;cursor:not-allowed}.convert-status{display:none;margin-top:13px;padding:11px 12px;background:#100e12;border:1px solid var(--line);border-radius:7px;color:#cbbcc3;font-size:9px;line-height:1.6}.convert-status.show{display:block}.convert-status progress{display:block;width:100%;height:7px;margin-top:9px;accent-color:#d84a5b}.converted-link{display:none;color:#f07882;font-size:10px;margin-top:10px}.converted-link.show{display:inline-block}.converter-foot{font-size:8px;color:#796d75;line-height:1.6;margin-top:10px}
+@media(max-width:620px){.converter-grid{grid-template-columns:1fr}.converter-actions>*{width:100%}}footer{border-top:1px solid var(--line);margin-top:31px;padding-top:14px;color:#71666e;font-size:8px;letter-spacing:1.3px}footer span{color:#bd4757}.right{float:right}
 @media(max-width:760px){.shell{grid-template-columns:1fr}aside{display:none}.content{padding-top:42px}.platforms{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:480px){.topbar{height:56px;padding:0 16px}.content{padding:34px 15px 24px}h1{font-size:36px}.panel{padding:16px}.input-wrap{flex-wrap:wrap;padding:8px}.input-wrap input{font-size:10px}.primary{width:100%}.formats{gap:6px}.platforms{grid-template-columns:repeat(2,minmax(0,1fr))}.section-head{align-items:start;gap:10px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
@@ -43,6 +45,24 @@
         <button id="submit" class="primary" type="submit">Check link&nbsp; ↓</button>
       </form>
       <div id="result" class="result" role="status" aria-live="polite"></div>
+      <div class="converter">
+        <h3 class="converter-title">Convert a video on this device</h3>
+        <p class="converter-copy">Choose a file from your phone or computer. Conversion runs locally in this browser; the file is not sent to Itachi.</p>
+        <label class="field-label" for="localMedia">VIDEO OR AUDIO FILE</label>
+        <input id="localMedia" type="file" accept="video/*,audio/*">
+        <div class="converter-grid">
+          <div><label class="field-label" for="outputFormat">OUTPUT FORMAT</label><select id="outputFormat"><option value="mp4">MP4 · H.264</option><option value="webm">WebM · VP9</option><option value="mp3">MP3 · Audio only</option></select></div>
+          <div><label class="field-label" for="outputSize">RESOLUTION</label><select id="outputSize"><option value="source">Original dimensions</option><option value="1080">Up to 1080p</option><option value="720">Up to 720p</option><option value="480">Up to 480p</option><option value="360">Up to 360p</option></select></div>
+          <div><label class="field-label" for="outputQuality">QUALITY / SIZE</label><select id="outputQuality"><option value="high">Higher quality</option><option value="balanced" selected>Balanced</option><option value="small">Smaller file</option></select></div>
+        </div>
+        <div class="converter-actions">
+          <button id="convertButton" class="secondary" type="button">Convert on this device</button>
+          <span id="engineState" class="converter-copy">Converter loads only when you start your first conversion (about 31 MB).</span>
+        </div>
+        <div id="convertStatus" class="convert-status" role="status" aria-live="polite"></div>
+        <a id="convertedDownload" class="converted-link" href="#" download>Save converted file ↓</a>
+        <p class="converter-foot">Large videos need substantial free memory and processing time. Keep this tab open during conversion. Powered by <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank" rel="noopener noreferrer" style="color:#c88b96">FFmpeg.wasm</a> (GPL-2.0-or-later; <a href="https://github.com/ffmpegwasm/ffmpeg.wasm-core" target="_blank" rel="noopener noreferrer" style="color:#c88b96">source</a>).</p>
+      </div>
       <div class="formats"><span class="formats-label">DIRECT FILES</span><span class="format"><b>01</b> MP4 / WebM</span><span class="format"><b>02</b> MP3 / WAV / OGG</span><span class="format"><b>03</b> Images / other files</span></div>
     </section>
     <div class="section-head"><div><h2>Supported sources</h2><p>Itachi identifies the link type and explains what can be done.</p></div><span class="count">LINK DETECTION</span></div>
@@ -212,5 +232,175 @@ function showMessage(title,message){
  result.append(strong,body);
 }
 </script>
-</body>
+
+<script type="module">
+import { FFmpeg } from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
+
+const localMedia = document.getElementById("localMedia");
+const outputFormat = document.getElementById("outputFormat");
+const outputSize = document.getElementById("outputSize");
+const outputQuality = document.getElementById("outputQuality");
+const convertButton = document.getElementById("convertButton");
+const engineState = document.getElementById("engineState");
+const convertStatus = document.getElementById("convertStatus");
+const convertedDownload = document.getElementById("convertedDownload");
+
+let ffmpeg = null;
+let engineLoading = null;
+let convertedUrl = null;
+let currentFile = null;
+
+localMedia.addEventListener("change", () => {
+  currentFile = localMedia.files && localMedia.files[0] ? localMedia.files[0] : null;
+  if (convertedUrl) URL.revokeObjectURL(convertedUrl);
+  convertedUrl = null;
+  convertedDownload.classList.remove("show");
+  if (currentFile) {
+    setConvertStatus("Selected: " + currentFile.name + " (" + formatBytes(currentFile.size) + "). Ready to convert.", null);
+  } else {
+    convertStatus.classList.remove("show");
+  }
+});
+
+outputFormat.addEventListener("change", () => {
+  const audioOnly = outputFormat.value === "mp3";
+  outputSize.disabled = audioOnly;
+  if (audioOnly) outputSize.value = "source";
+});
+
+async function loadConversionEngine() {
+  if (ffmpeg && ffmpeg.loaded) return ffmpeg;
+  if (engineLoading) return engineLoading;
+  engineLoading = (async () => {
+    engineState.textContent = "Loading FFmpeg WebAssembly…";
+    setConvertStatus("Downloading the conversion engine. This is a one-time load in this browser; the engine is about 31 MB.", 0);
+    const instance = new FFmpeg();
+    instance.on("log", ({ message }) => {
+      if (message && /error|failed|unknown encoder|not found/i.test(message)) {
+        engineState.textContent = message.slice(0, 180);
+      }
+    });
+    instance.on("progress", ({ progress }) => {
+      if (Number.isFinite(progress)) {
+        const pct = Math.max(0, Math.min(99, Math.round(progress * 100)));
+        const bar = convertStatus.querySelector("progress");
+        if (bar) bar.value = pct;
+      }
+    });
+    const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+    const coreURL = await fetchAsBlobURL(base + "/ffmpeg-core.js", "text/javascript");
+    const wasmURL = await fetchAsBlobURL(base + "/ffmpeg-core.wasm", "application/wasm");
+    await instance.load({ coreURL, wasmURL });
+    ffmpeg = instance;
+    engineState.textContent = "Converter ready in this tab.";
+    setConvertStatus("Converter ready. Your selected media stays on this device.", null);
+    return instance;
+  })();
+  try {
+    return await engineLoading;
+  } catch (error) {
+    engineState.textContent = "Could not load converter. Check your connection and retry.";
+    throw error;
+  } finally {
+    engineLoading = null;
+  }
+}
+
+async function fetchAsBlobURL(url, mimeType) {
+  const response = await fetch(url, { mode: "cors", credentials: "omit" });
+  if (!response.ok) throw new Error("Could not load conversion engine (" + response.status + ").");
+  const blob = await response.blob();
+  return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+}
+
+convertButton.addEventListener("click", async () => {
+  if (!currentFile) {
+    setConvertStatus("Choose a video or audio file first.", null);
+    return;
+  }
+  if (!currentFile.type.startsWith("video/") && !currentFile.type.startsWith("audio/")) {
+    setConvertStatus("Please select a supported video or audio file.", null);
+    return;
+  }
+  const format = outputFormat.value;
+  if (currentFile.type.startsWith("audio/") && format !== "mp3") {
+    setConvertStatus("For this first version, audio-only input can be converted to MP3. Choose a video file for MP4 or WebM output.", null);
+    return;
+  }
+
+  convertButton.disabled = true;
+  convertedDownload.classList.remove("show");
+  if (convertedUrl) URL.revokeObjectURL(convertedUrl);
+  convertedUrl = null;
+  try {
+    const engine = await loadConversionEngine();
+    setConvertStatus("Preparing " + currentFile.name + " for conversion…", 0);
+    const inputExt = getSafeExtension(currentFile.name);
+    const inputName = "itachi-input." + inputExt;
+    const outputName = "itachi-output." + format;
+    await engine.writeFile(inputName, new Uint8Array(await currentFile.arrayBuffer()));
+
+    const args = ["-i", inputName, "-y"];
+    if (format === "mp3") {
+      const bitrate = outputQuality.value === "high" ? "320k" : outputQuality.value === "small" ? "128k" : "192k";
+      args.push("-vn", "-c:a", "libmp3lame", "-b:a", bitrate);
+    } else {
+      const maxHeight = outputSize.value;
+      if (maxHeight !== "source") {
+        args.push("-vf", "scale=-2:min(" + maxHeight + "\\,ih)");
+      }
+      if (format === "mp4") {
+        const crf = outputQuality.value === "high" ? "18" : outputQuality.value === "small" ? "28" : "23";
+        args.push("-c:v", "libx264", "-preset", "ultrafast", "-crf", crf, "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart");
+      } else {
+        const crf = outputQuality.value === "high" ? "28" : outputQuality.value === "small" ? "40" : "34";
+        args.push("-c:v", "libvpx-vp9", "-deadline", "realtime", "-cpu-used", "8", "-crf", crf, "-b:v", "0", "-c:a", "libopus", "-b:a", "128k");
+      }
+    }
+    args.push(outputName);
+    setConvertStatus("Converting locally… This can take longer than the video itself, especially on phones.", 0);
+    await engine.exec(args);
+    const data = await engine.readFile(outputName);
+    const mime = format === "mp4" ? "video/mp4" : format === "webm" ? "video/webm" : "audio/mpeg";
+    convertedUrl = URL.createObjectURL(new Blob([data.buffer], { type: mime }));
+    const baseName = currentFile.name.replace(/\\.[^.]+$/, "") || "itachi-media";
+    convertedDownload.href = convertedUrl;
+    convertedDownload.download = baseName + "." + format;
+    convertedDownload.textContent = "Save " + baseName + "." + format + " (" + formatBytes(data.byteLength) + ") ↓";
+    convertedDownload.classList.add("show");
+    setConvertStatus("Conversion complete. The output is ready to save to your device.", 100);
+    try { await engine.deleteFile(inputName); await engine.deleteFile(outputName); } catch {}
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    setConvertStatus("Conversion failed: " + message + " Try another input file or output format. Some input codecs may not be supported by the browser build.", null);
+  } finally {
+    convertButton.disabled = false;
+  }
+});
+
+function setConvertStatus(message, percent) {
+  convertStatus.classList.add("show");
+  convertStatus.replaceChildren();
+  const text = document.createElement("div");
+  text.textContent = message;
+  convertStatus.append(text);
+  if (percent !== null && percent !== undefined) {
+    const bar = document.createElement("progress");
+    bar.max = 100;
+    bar.value = percent;
+    convertStatus.append(bar);
+  }
+}
+function getSafeExtension(name) {
+  const match = String(name).toLowerCase().match(/\\.([a-z0-9]{1,8})$/);
+  return match ? match[1] : "media";
+}
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return "Unknown size";
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2) + " " + units[i];
+}
+</script>\n</body>
 </html>
