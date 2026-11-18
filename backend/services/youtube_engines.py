@@ -117,5 +117,5 @@ def engine_health() -> dict:
         "yt_dlp": {"available": importlib.util.find_spec("yt_dlp") is not None},
         "youtubejs": {"available": shutil.which("node") is not None and (Path(__file__).resolve().parent / "youtubejs.mjs").is_file()},
         "newpipe": {"available": False, "reason": "Isolated adapter not installed yet."},
-        "cobalt": {"available": bool(os.getenv("COBALT_API_URL")), "mode": "remote API" if os.getenv("COBALT_API_URL") else "not configured"},
+        "cobalt": {"available": False, "configured": bool(os.getenv("COBALT_API_URL")), "reason": "Remote Cobalt adapter is not wired yet."},
     }
