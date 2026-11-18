@@ -15,8 +15,8 @@ from pydantic import BaseModel, HttpUrl
 from starlette.concurrency import run_in_threadpool
 
 from services.detector import inspect_url, PROVIDERS
-from services.youtube import inspect_youtube, resolve_download, safe_filename, validate_youtube_url
-from services.youtube_engines import inspect_with_fallback, download_with_engine, engine_health
+from services.youtube import safe_filename, validate_youtube_url
+from services.youtube_engines import inspect_with_fallback, resolve_download_with_fallback, download_with_engine, engine_health
 
 app = FastAPI(title="Itachi Shadow Media Vault API", version="0.2.0")
 
@@ -113,15 +113,14 @@ async def youtube_download(request: YouTubeDownloadRequest):
     temp_dir = None
     try:
         url = validate_youtube_url(str(request.url))
-        resolved = await run_in_threadpool(resolve_download, url, request.format_id)
+        resolved = await run_in_threadpool(resolve_download_with_fallback, url, request.format_id)
         temp_dir = tempfile.mkdtemp(prefix="itachi-")
         output_file = await run_in_threadpool(
             download_with_engine, url, resolved, temp_dir
         )
         files = [path for path in Path(temp_dir).iterdir() if path.is_file()]
-        if not files:
-            raise RuntimeError("yt-dlp completed without producing a media file.")
-        output_file = files[0]
+        if not output_file.is_file():
+            raise RuntimeError("The selected extractor completed without producing a media file.")
         filename = safe_filename(resolved["title"], output_file.suffix.lstrip("."))
         media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
