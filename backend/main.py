@@ -118,7 +118,6 @@ async def youtube_download(request: YouTubeDownloadRequest):
         output_file = await run_in_threadpool(
             download_with_engine, url, resolved, temp_dir
         )
-        files = [path for path in Path(temp_dir).iterdir() if path.is_file()]
         if not output_file.is_file():
             raise RuntimeError("The selected extractor completed without producing a media file.")
         filename = safe_filename(resolved["title"], output_file.suffix.lstrip("."))
