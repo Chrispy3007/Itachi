@@ -73,6 +73,12 @@ form.addEventListener("submit", async event=>{
  if(!allowedProtocols.includes(parsed.protocol)){showMessage("Unsupported URL","Only public HTTP and HTTPS file URLs are supported.");return}
  if(parsed.username||parsed.password){showMessage("Unsupported URL","URLs containing embedded usernames or passwords are not accepted.");return}
 
+ const host=parsed.hostname.toLowerCase().replace(/\\.$/,"");
+ const isYouTube=["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com","youtu.be","www.youtu.be"].some(domain=>host===domain||host.endsWith("."+domain));
+ if(isYouTube){
+   showYouTubeHelp(parsed.href);
+   return;
+ }
  const suggestedName=getFileName(parsed);
  let saveHandlePromise=null;
  if(window.isSecureContext && "showSaveFilePicker" in window){
@@ -152,6 +158,28 @@ form.addEventListener("submit", async event=>{
  }
 });
 
+
+function showYouTubeHelp(url){
+ result.className="result show";
+ result.replaceChildren();
+ const strong=document.createElement("strong");
+ strong.textContent="YouTube link recognized";
+ const body=document.createElement("div");
+ body.textContent="YouTube page links are not direct media files, so this browser downloader cannot fetch them as MP4s. If this is your own upload, YouTube provides a download option in YouTube Studio. For other videos, use YouTube's own available viewing or download options.";
+ const studio=document.createElement("a");
+ studio.href="https://studio.youtube.com/";
+ studio.target="_blank";studio.rel="noopener noreferrer";
+ studio.textContent="Open YouTube Studio";
+ studio.style.cssText="display:inline-block;margin:10px 12px 0 0;color:#f07882";
+ const help=document.createElement("a");
+ help.href="https://support.google.com/youtube/answer/56100";
+ help.target="_blank";help.rel="noopener noreferrer";
+ help.textContent="Official instructions for downloading your uploads";
+ help.style.cssText="display:inline-block;margin-top:10px;color:#f07882";
+ const source=document.createElement("small");
+ source.textContent=url;
+ result.append(strong,body,studio,help,source);
+}
 function getFileName(url){
  let name;
  try{name=decodeURIComponent(url.pathname.split("/").filter(Boolean).pop()||"media-download");}
