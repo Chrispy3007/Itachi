@@ -74,10 +74,19 @@ async def youtube_inspect(request: InspectRequest):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Could not inspect this public YouTube video. It may be unavailable or YouTube may have changed its delivery.",
-        ) from exc
+        # Return a safe, actionable error category while retaining full details in Render logs.
+        import logging
+        logging.getLogger("itachi.youtube").exception("YouTube inspection failed")
+        message = str(exc).lower()
+        if "javascript" in message or "js challenge" in message or "ejs" in message:
+            detail = "YouTube extraction needs the JavaScript challenge components. Check that yt-dlp-ejs and Deno installed successfully in the latest Render deploy."
+        elif "sign in" in message or "bot" in message or "confirm you're not a bot" in message:
+            detail = "YouTube declined this request or requested sign-in. Itachi does not use account cookies or bypass access controls."
+        elif "private" in message or "unavailable" in message or "not available" in message:
+            detail = "This video is unavailable for public extraction, or the source did not expose supported formats."
+        else:
+            detail = "yt-dlp could not inspect this video. Check the Render service logs for the extractor error and try a different public video."
+        raise HTTPException(status_code=502, detail=detail) from exc
 
 
 @app.post("/api/youtube/download")
