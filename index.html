@@ -64,6 +64,9 @@ const form=document.getElementById("inspectForm");
 const input=document.getElementById("url");
 const result=document.getElementById("result");
 const button=document.getElementById("submit");
+// Set this to the deployed FastAPI base URL (for example, https://your-api.example.com).
+// Leave blank until the backend has been deployed and is reachable from GitHub Pages.
+const ITACHI_API_BASE=(window.ITACHI_API_BASE||"").replace(/\\/+$/,"");
 const allowedProtocols=["https:","http:"];
 
 form.addEventListener("submit", async event=>{
@@ -238,6 +241,83 @@ async function downloadDirectFile(parsed){
  }
 }
 
+async function loadYouTubeFormats(url,container,state,detail){
+ try{
+   const response=await fetch(ITACHI_API_BASE+"/api/youtube/inspect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+   const data=await response.json();
+   if(!response.ok)throw new Error(data.detail||"The download service could not inspect this video.");
+   state.textContent=data.formats&&data.formats.length?"Available formats":"No supported single-file formats";
+   detail.textContent=data.message||"Only formats returned by the source are listed.";
+   if(!data.formats||!data.formats.length)return;
+   const list=document.createElement("div");
+   list.style.cssText="display:grid;gap:8px;margin-top:12px";
+   for(const format of data.formats){
+     const item=document.createElement("div");
+     item.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px;border:1px solid #332832;border-radius:6px";
+     const info=document.createElement("div");
+     info.style.cssText="min-width:0;font-size:10px;color:#eee2e7";
+     const label=document.createElement("strong");
+     label.textContent=[format.resolution||"Video",String(format.ext||"file").toUpperCase(),format.fps?format.fps+" fps":""].filter(Boolean).join(" · ");
+     label.style.margin="0";
+     const size=document.createElement("small");
+     size.textContent=format.filesize?formatBytes(format.filesize):"File size not provided";
+     info.append(label,size);
+     const download=document.createElement("button");
+     download.type="button";download.className="primary";download.textContent="Download";
+     download.style.cssText="padding:9px 12px;flex:none";
+     download.addEventListener("click",()=>downloadYouTubeFormat(url,format,download,state,detail));
+     item.append(info,download);list.append(item);
+   }
+   container.append(list);
+ }catch(error){
+   state.textContent="Download service unavailable";
+   detail.textContent=error.message||"The backend could not inspect this video.";
+ }
+}
+async function downloadYouTubeFormat(url,format,button,state,detail){
+ let handle=null;
+ if(window.isSecureContext&&typeof window.showSaveFilePicker==="function"){
+   try{handle=await window.showSaveFilePicker({suggestedName:"youtube-video."+(format.ext||"mp4")});}
+   catch(error){if(error&&error.name==="AbortError")return;}
+ }
+ button.disabled=true;button.textContent="Starting…";state.textContent="Downloading";
+ try{
+   const response=await fetch(ITACHI_API_BASE+"/api/youtube/download",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url,format_id:format.format_id})});
+   if(!response.ok){
+     let message="The download could not be started.";
+     try{const body=await response.json();message=body.detail||message;}catch{}
+     throw new Error(message);
+   }
+   if(!response.body||!response.body.getReader())throw new Error("This browser cannot stream the download.");
+   const reader=response.body.getReader();
+   let received=0;
+   const total=Number(response.headers.get("content-length"))||0;
+   if(handle){
+     const writable=await handle.createWritable();
+     try{
+       while(true){
+         const part=await reader.read();if(part.done)break;
+         await writable.write(part.value);received+=part.value.byteLength;
+         detail.textContent=formatBytes(received)+(total?" of "+formatBytes(total):" downloaded");
+       }
+       await writable.close();
+     }catch(error){try{await writable.abort();}catch{}throw error;}
+   }else{
+     const chunks=[];
+     while(true){
+       const part=await reader.read();if(part.done)break;
+       chunks.push(part.value);received+=part.value.byteLength;
+       detail.textContent=formatBytes(received)+" received";
+     }
+     const blob=new Blob(chunks,{type:response.headers.get("content-type")||"application/octet-stream"});
+     const objectUrl=URL.createObjectURL(blob);
+     const link=document.createElement("a");link.href=objectUrl;link.download="youtube-video."+(format.ext||"mp4");link.style.display="none";
+     document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+   }
+   state.textContent="Download complete";detail.textContent=formatBytes(received)+" saved to your device.";
+ }catch(error){state.textContent="Download failed";detail.textContent=error.message||"The download failed.";}
+ finally{button.disabled=false;button.textContent="Download";}
+}
 function getYouTubeId(url){
  const h=url.hostname.toLowerCase();
  if(isHost(h,["youtu.be","www.youtu.be"]))return url.pathname.split("/").filter(Boolean)[0]||null;
@@ -263,28 +343,25 @@ async function showYouTubePreview(id,url){
  const channel=document.createElement("div");channel.style.color="#b9aab1";channel.textContent="Channel details unavailable";
  details.append(title,channel);preview.append(thumbnail,details);
  const note=document.createElement("small");
- note.textContent="YouTube's public metadata endpoint provides title, channel and thumbnail—not downloadable video files or quality streams. Itachi will only show download choices when an authorized source actually exposes them.";
+ note.textContent="Download options are loaded from Itachi's yt-dlp backend. Only formats returned by the source are shown; separate streams that need merging are not listed in this first version.";
  const availability=document.createElement("div");
+ availability.id="youtube-download-options";
  availability.style.cssText="margin-top:13px;padding:13px;border:1px solid #49303a;border-radius:7px;background:#100e12";
  const availabilityTitle=document.createElement("strong");
- availabilityTitle.textContent="Download availability";
+ availabilityTitle.textContent="Download options";
  const availabilityState=document.createElement("div");
  availabilityState.style.cssText="margin-top:5px;color:#f0c6ce;font-size:10px;font-weight:700";
- availabilityState.textContent="No downloadable video file is exposed to Itachi for this link.";
+ availabilityState.textContent=ITACHI_API_BASE?"Checking available formats…":"yt-dlp backend is not connected to this site yet.";
  const availabilityDetail=document.createElement("small");
- availabilityDetail.textContent="A public video can be watchable without providing a downloadable MP4 or selectable quality streams. If YouTube offers an in-app Download option for this video, you can use it for offline viewing; that does not create an MP4 file on your device.";
- const availabilityHelp=document.createElement("a");
- availabilityHelp.href="https://support.google.com/youtube/answer/11977233";
- availabilityHelp.target="_blank";availabilityHelp.rel="noopener noreferrer";
- availabilityHelp.textContent="YouTube's official offline-viewing help";
- availabilityHelp.style.cssText="display:inline-block;margin-top:9px;color:#f07882";
- availability.append(availabilityTitle,availabilityState,availabilityDetail,availabilityHelp);
+ availabilityDetail.textContent=ITACHI_API_BASE?"Checking which single-file formats are actually available.":"The backend code is ready, but a deployed API URL must be configured before download options can appear.";
+ availability.append(availabilityTitle,availabilityState,availabilityDetail);
  const frame=document.createElement("iframe");frame.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(id);frame.title="YouTube video preview";frame.loading="lazy";frame.referrerPolicy="strict-origin-when-cross-origin";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;
  frame.style.cssText="display:block;width:100%;max-width:560px;aspect-ratio:16/9;border:1px solid #49303a;border-radius:8px;margin-top:13px;background:#080609";
  const studio=document.createElement("a");studio.href="https://studio.youtube.com/";studio.target="_blank";studio.rel="noopener noreferrer";studio.textContent="For your own uploads: open YouTube Studio";studio.style.cssText="display:inline-block;margin:12px 14px 0 0;color:#f07882";
  const help=document.createElement("a");help.href="https://support.google.com/youtube/answer/56100";help.target="_blank";help.rel="noopener noreferrer";help.textContent="Official download instructions";help.style.cssText="display:inline-block;margin-top:12px;color:#f07882";
  const source=document.createElement("small");source.textContent=url;
  result.append(strong,copy,preview,note,availability,frame,studio,help,source);
+ if(ITACHI_API_BASE) loadYouTubeFormats(url,availability,availabilityState,availabilityDetail);
  try{
    const endpoint=new URL("https://www.youtube.com/oembed");
    endpoint.searchParams.set("url",url);
