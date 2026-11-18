@@ -31,28 +31,28 @@
   <div class="content">
     <div class="kicker">THE SHADOW MEDIA VAULT <span>✦</span></div>
     <h1>Your media.<br><em>Without the noise.</em></h1>
-    <p class="intro">Paste a direct media-file URL and save the original file to your device. Itachi does not re-encode or store your media.</p>
+    <p class="intro">Paste a video-page link or a direct media-file URL. Itachi will identify the source and show the supported next step.</p>
     <section class="panel">
       <div class="panel-head">
-        <div><h2>Download a media file</h2><p>Use a direct URL to a file you own or are authorized to save.</p></div>
+        <div><h2>Paste a video or media link</h2><p>Start with a YouTube, Shorts, TikTok, Instagram or direct media URL.</p></div>
         <div class="eye sharingan-logo"><svg class="sharingan-svg" viewBox="0 0 100 100" role="img" aria-label="Mangekyo Sharingan-inspired eye"><defs><radialGradient id="irisRed2" cx="38%" cy="30%" r="72%"><stop offset="0" stop-color="#ff7278"/><stop offset=".48" stop-color="#df263d"/><stop offset="1" stop-color="#760b20"/></radialGradient></defs><circle cx="50" cy="50" r="48" fill="#090609" stroke="#f06a75" stroke-width="2"/><circle cx="50" cy="50" r="42" fill="url(#irisRed2)" stroke="#4c0915" stroke-width="2"/><circle cx="50" cy="50" r="35" fill="none" stroke="#ff9aa0" stroke-opacity=".35"/><g class="sharingan-spin" fill="#10070b" stroke="#080508" stroke-width=".8" stroke-linejoin="round"><path d="M50 12 C55 21 67 25 69 35 C71 44 63 49 56 46 C49 43 50 34 56 31 C61 28 59 22 50 12Z"/><path d="M50 12 C55 21 67 25 69 35 C71 44 63 49 56 46 C49 43 50 34 56 31 C61 28 59 22 50 12Z" transform="rotate(120 50 50)"/><path d="M50 12 C55 21 67 25 69 35 C71 44 63 49 56 46 C49 43 50 34 56 31 C61 28 59 22 50 12Z" transform="rotate(240 50 50)"/></g><circle cx="50" cy="50" r="13" fill="#080609" stroke="#ff9aa0" stroke-width="1.2"/><circle cx="50" cy="50" r="5.5" fill="#e83248"/></svg></div>
       </div>
       <form id="inspectForm" class="input-wrap">
         <span class="link-icon">↗</span>
-        <input id="url" type="url" placeholder="Paste a direct .mp4, .mp3, .webm, .jpg or other file URL" autocomplete="url" required>
-        <button id="submit" class="primary" type="submit">Download file&nbsp; ↓</button>
+        <input id="url" type="url" placeholder="Paste a YouTube, Shorts, TikTok, Instagram or direct file link" autocomplete="url" required>
+        <button id="submit" class="primary" type="submit">Check link&nbsp; ↓</button>
       </form>
       <div id="result" class="result" role="status" aria-live="polite"></div>
-      <div class="formats"><span class="formats-label">SUPPORTED FILES</span><span class="format"><b>01</b> MP4 / WebM</span><span class="format"><b>02</b> MP3 / WAV / OGG</span><span class="format"><b>03</b> Images / other files</span></div>
+      <div class="formats"><span class="formats-label">DIRECT FILES</span><span class="format"><b>01</b> MP4 / WebM</span><span class="format"><b>02</b> MP3 / WAV / OGG</span><span class="format"><b>03</b> Images / other files</span></div>
     </section>
-    <div class="section-head"><div><h2>Provider integrations</h2><p>Platform-specific download support is a later milestone.</p></div><span class="count">COMING NEXT</span></div>
+    <div class="section-head"><div><h2>Supported sources</h2><p>Itachi identifies the link type and explains what can be done.</p></div><span class="count">LINK DETECTION</span></div>
     <div class="platforms">
-      <div class="platform"><div class="platform-icon">▶</div><b>YouTube</b><small>Link recognition</small></div>
+      <div class="platform"><div class="platform-icon">▶</div><b>YouTube</b><small>Video / Shorts links</small></div>
       <div class="platform"><div class="platform-icon">◎</div><b>Instagram</b><small>Eligible owned media</small></div>
       <div class="platform"><div class="platform-icon">♫</div><b>Spotify</b><small>Metadata only</small></div>
       <div class="platform"><div class="platform-icon">♪</div><b>TikTok</b><small>Official download options</small></div>
     </div>
-    <div class="note"><strong>How direct downloads work.</strong> Itachi transfers the file from its source to your device when the source permits browser access. Large-file streaming to disk works in supported browsers; other browsers may need to buffer the file first. Some hosts block browser downloads with CORS rules. Platform pages such as ordinary YouTube, Instagram, TikTok or Spotify links are not direct media-file URLs. We will add supported provider integrations separately. No DRM or access-control bypasses.</div>
+    <div class="note"><strong>Important.</strong> A video being watchable does not automatically make its stream downloadable. Direct file URLs can be saved when the host allows browser access. For platform pages, Itachi can identify the provider and show official options; it will not bypass DRM, access controls or platform restrictions. We will only show format/quality choices when a legitimate source exposes them.</div>
     <footer>ITACHI <span>•</span> MEDIA VAULT <span class="right">BUILT FOR QUIET WORK</span></footer>
   </div>
 </main>
@@ -69,16 +69,20 @@ form.addEventListener("submit", async event=>{
  result.className="result";
  result.replaceChildren();
  let parsed;
- try{parsed=new URL(input.value.trim())}catch{showMessage("Invalid URL","Enter a complete direct file URL beginning with https://.");return}
- if(!allowedProtocols.includes(parsed.protocol)){showMessage("Unsupported URL","Only public HTTP and HTTPS file URLs are supported.");return}
- if(parsed.username||parsed.password){showMessage("Unsupported URL","URLs containing embedded usernames or passwords are not accepted.");return}
+ try{parsed=new URL(input.value.trim())}catch{showMessage("Invalid link","Paste a complete public link beginning with https://.");return}
+ if(!["https:","http:"].includes(parsed.protocol)){showMessage("Unsupported link","Only HTTP and HTTPS links are supported.");return}
+ if(parsed.username||parsed.password){showMessage("Unsupported link","Links containing embedded usernames or passwords are not accepted.");return}
 
  const host=parsed.hostname.toLowerCase().replace(/\\.$/,"");
- const isYouTube=["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com","youtu.be","www.youtu.be"].some(domain=>host===domain||host.endsWith("."+domain));
- if(isYouTube){
-   showYouTubeHelp(parsed.href);
-   return;
- }
+ const youtubeId=getYouTubeId(parsed);
+ if(youtubeId){showYouTubePreview(youtubeId,parsed.href);return;}
+ if(isHost(host,["instagram.com","instagr.am"])){showProviderMessage("Instagram link recognized","Instagram posts and reels are not direct media files. Itachi cannot extract protected streams from the page. Use Instagram's own download/save options where available, or paste a direct media-file URL you are authorized to save.",parsed.href);return;}
+ if(isHost(host,["tiktok.com","vm.tiktok.com"])){showProviderMessage("TikTok link recognized","This is a TikTok page link, not a direct media file. Use TikTok's in-app Save video option when the creator has enabled it, or paste a direct media-file URL you are authorized to save.",parsed.href);return;}
+ if(isHost(host,["spotify.com","open.spotify.com"])){showProviderMessage("Spotify link recognized","Spotify links identify music or podcasts, but Spotify does not expose downloadable audio files through its public metadata features. Use Spotify's official offline-listening feature where available.",parsed.href);return;}
+ await downloadDirectFile(parsed);
+});
+
+async function downloadDirectFile(parsed){
  const suggestedName=getFileName(parsed);
  let saveHandlePromise=null;
  if(window.isSecureContext && "showSaveFilePicker" in window){
@@ -102,62 +106,58 @@ form.addEventListener("submit", async event=>{
    const response=await fetch(parsed.href,{method:"GET",mode:"cors",credentials:"omit",redirect:"follow"});
    if(!response.ok)throw new Error("The source returned HTTP "+response.status+".");
    const type=(response.headers.get("content-type")||"application/octet-stream").split(";")[0].trim().toLowerCase();
-   if(type==="text/html"||type==="application/json"||type==="text/plain"||type.includes("javascript")){
-     throw new Error("That URL returned a webpage or text response, not a media file. Use a direct file URL.");
-   }
+   if(type==="text/html"||type==="application/json"||type==="text/plain"||type.includes("javascript"))throw new Error("That URL returned a webpage or text response, not a media file. Paste a direct file URL.");
    const fileName=getResponseFileName(response,parsed);
    const total=Number(response.headers.get("content-length"))||0;
    if(total){detail.textContent="Downloading "+formatBytes(total)+" directly from the source.";progress.max=total;progress.value=0;}
    else{detail.textContent="Downloading directly from the source. File size is not provided.";progress.removeAttribute("value");}
    const fileHandle=saveHandlePromise?await saveHandlePromise:null;
    if(fileHandle && response.body && response.body.getReader){
-     const writable=await fileHandle.createWritable();
-     const reader=response.body.getReader();
+     const writable=await fileHandle.createWritable(),reader=response.body.getReader();
      let received=0;
-     try{
-       while(true){
-         const part=await reader.read();
-         if(part.done)break;
-         await writable.write(part.value);
-         received+=part.value.byteLength;
-         if(total){progress.value=received;status.textContent=formatBytes(received)+" of "+formatBytes(total)+" · "+Math.round(received/total*100)+"%";}
-         else{status.textContent=formatBytes(received)+" downloaded";}
-       }
-       await writable.close();
-     }catch(error){await writable.abort();throw error;}
-     heading.textContent="Download complete";
-     detail.textContent=fileName+" has been saved to your chosen location.";
-     status.textContent=formatBytes(received)+" saved on your device.";
-     progress.value=100;progress.max=100;
+     try{while(true){const part=await reader.read();if(part.done)break;await writable.write(part.value);received+=part.value.byteLength;if(total){progress.value=received;status.textContent=formatBytes(received)+" of "+formatBytes(total)+" · "+Math.round(received/total*100)+"%";}else status.textContent=formatBytes(received)+" downloaded";}await writable.close();}
+     catch(error){await writable.abort();throw error;}
+     heading.textContent="Download complete";detail.textContent=fileName+" has been saved to your chosen location.";status.textContent=formatBytes(received)+" saved on your device.";progress.value=100;progress.max=100;
    }else{
      status.textContent="Receiving file…";
-     const blob=await response.blob();
-     const objectUrl=URL.createObjectURL(blob);
-     const link=document.createElement("a");
-     link.href=objectUrl;link.download=fileName;link.style.display="none";
-     document.body.append(link);link.click();link.remove();
-     setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
-     heading.textContent="Download started";
-     detail.textContent="Your browser has been asked to save "+fileName+". This browser may temporarily use memory while preparing the file.";
-     progress.max=100;progress.value=100;
-     status.textContent=formatBytes(blob.size)+" received from source.";
+     const blob=await response.blob(),objectUrl=URL.createObjectURL(blob),link=document.createElement("a");
+     link.href=objectUrl;link.download=fileName;link.style.display="none";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+     heading.textContent="Download started";detail.textContent="Your browser has been asked to save "+fileName+". This browser may temporarily use memory while preparing the file.";progress.max=100;progress.value=100;status.textContent=formatBytes(blob.size)+" received from source.";
    }
  }catch(error){
-   heading.textContent="Could not download this URL";
-   detail.textContent=error.message||"The source did not allow a browser download.";
-   progress.hidden=true;
+   heading.textContent="Could not download this URL";detail.textContent=error.message||"The source did not allow a browser download.";progress.hidden=true;
    status.textContent="Some hosts block browser access (CORS). Try a direct public file URL from a host that allows browser downloads.";
-   const link=document.createElement("a");
-   link.href=parsed.href;link.target="_blank";link.rel="noopener noreferrer";
-   link.textContent="Open the original file source";
-   link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";
-   result.append(link);
- }finally{
-   button.disabled=false;
-   button.textContent="Download file ↓";
- }
-});
+   const link=document.createElement("a");link.href=parsed.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open the original source";link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";result.append(link);
+ }finally{button.disabled=false;button.textContent="Check link ↓";}
+}
 
+function getYouTubeId(url){
+ const h=url.hostname.toLowerCase();
+ if(isHost(h,["youtu.be","www.youtu.be"]))return url.pathname.split("/").filter(Boolean)[0]||null;
+ if(!isHost(h,["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com"]))return null;
+ if(url.pathname==="/watch")return url.searchParams.get("v");
+ const match=url.pathname.match(/^\\/(?:shorts|embed|live)\\/([A-Za-z0-9_-]{6,})/);
+ return match?match[1]:null;
+}
+function isHost(host,domains){return domains.some(domain=>host===domain||host.endsWith("."+domain));}
+function showYouTubePreview(id,url){
+ result.className="result show";result.replaceChildren();
+ const strong=document.createElement("strong");strong.textContent="YouTube video recognized";
+ const copy=document.createElement("div");copy.textContent="Itachi identified this video link. You can preview it below. Download formats are not exposed by YouTube's public embed interface, so Itachi won't invent quality options or claim a download is ready.";
+ const frame=document.createElement("iframe");frame.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(id);frame.title="YouTube video preview";frame.loading="lazy";frame.referrerPolicy="strict-origin-when-cross-origin";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;
+ frame.style.cssText="display:block;width:100%;max-width:560px;aspect-ratio:16/9;border:1px solid #49303a;border-radius:8px;margin-top:13px;background:#080609";
+ const studio=document.createElement("a");studio.href="https://studio.youtube.com/";studio.target="_blank";studio.rel="noopener noreferrer";studio.textContent="Download your own uploads in YouTube Studio";studio.style.cssText="display:inline-block;margin:12px 14px 0 0;color:#f07882";
+ const help=document.createElement("a");help.href="https://support.google.com/youtube/answer/56100";help.target="_blank";help.rel="noopener noreferrer";help.textContent="Official instructions";help.style.cssText="display:inline-block;margin-top:12px;color:#f07882";
+ const source=document.createElement("small");source.textContent=url;
+ result.append(strong,copy,frame,studio,help,source);
+}
+function showProviderMessage(title,message,url){
+ result.className="result show";result.replaceChildren();
+ const strong=document.createElement("strong");strong.textContent=title;
+ const body=document.createElement("div");body.textContent=message;
+ const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open original post";link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";
+ result.append(strong,body,link);
+}
 
 function showYouTubeHelp(url){
  result.className="result show";
