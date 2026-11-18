@@ -33,8 +33,6 @@ def validate_youtube_url(raw_url: str) -> str:
 
 
 def _extract_info(url: str) -> dict:
-    # YouTube's current player challenge requires a supported JS runtime.
-    # Render installs Deno in the build command and adds it to PATH at startup.
     if not shutil.which("deno"):
         raise RuntimeError("Deno JavaScript runtime is missing from PATH on the Render service.")
     options = {
@@ -64,29 +62,44 @@ def inspect_youtube(url: str) -> dict:
     url = validate_youtube_url(url)
     info = _extract_info(url)
     formats = []
+    seen = set()
     for item in info.get("formats", []):
-        # Show only single-file formats containing both audio and video.
         if item.get("has_drm"):
-            continue
-        if item.get("vcodec") in (None, "none") or item.get("acodec") in (None, "none"):
             continue
         if item.get("protocol") not in {"http", "https"}:
             continue
         format_id = str(item.get("format_id", ""))
-        if not format_id:
+        if not format_id or format_id in seen:
             continue
+
+        has_video = item.get("vcodec") not in (None, "none")
+        has_audio = item.get("acodec") not in (None, "none")
+        if not has_video:
+            continue
+
+        # Include both native muxed formats and video-only adaptive formats.
+        # For video-only streams the download endpoint pairs this exact stream
+        # with the best available audio stream and muxes them with FFmpeg.
+        needs_merge = not has_audio
+        height = item.get("height")
+        output_ext = "mkv" if needs_merge else (item.get("ext") or "unknown")
         formats.append({
             "format_id": format_id,
-            "ext": item.get("ext") or "unknown",
-            "resolution": item.get("resolution") or (
-                f'{item.get("height")}p' if item.get("height") else "Audio/video"
-            ),
-            "height": item.get("height"),
+            "ext": output_ext,
+            "source_ext": item.get("ext") or "unknown",
+            "resolution": item.get("resolution") or (f"{height}p" if height else "Video"),
+            "height": height,
             "filesize": item.get("filesize") or item.get("filesize_approx"),
             "fps": item.get("fps"),
             "format_note": item.get("format_note"),
+            "needs_merge": needs_merge,
         })
-    formats.sort(key=lambda item: (item["height"] or 0, item["filesize"] or 0), reverse=True)
+        seen.add(format_id)
+
+    formats.sort(
+        key=lambda item: (item["height"] or 0, item["fps"] or 0, item["filesize"] or 0),
+        reverse=True,
+    )
     return {
         "provider": "youtube",
         "status": "available" if formats else "no_direct_formats",
@@ -98,10 +111,11 @@ def inspect_youtube(url: str) -> dict:
         "webpage_url": info.get("webpage_url") or url,
         "formats": formats,
         "message": (
-            "Only single-file formats containing both audio and video are listed. "
-            "Separate video/audio streams and DRM-marked formats are not offered."
+            "Video resolutions include native audio/video files and adaptive video streams. "
+            "Adaptive streams are paired with the best available audio and merged into an MKV file. "
+            "DRM-marked and non-downloadable formats are excluded."
             if formats else
-            "yt-dlp did not expose a supported single-file audio/video format for this video."
+            "yt-dlp did not expose supported downloadable video formats for this video."
         ),
     }
 
@@ -111,9 +125,11 @@ def resolve_download(url: str, format_id: str) -> dict:
     selected = next((item for item in result["formats"] if item["format_id"] == format_id), None)
     if not selected:
         raise ValueError("That format is not available for this video. Inspect the link again.")
+    selector = f"{format_id}+bestaudio/best" if selected["needs_merge"] else format_id
     return {
         "url": result["webpage_url"],
         "format": selected,
+        "format_selector": selector,
         "title": result["title"],
     }
 
