@@ -13,6 +13,10 @@ def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+    components = response.json()["components"]
+    assert components["yt_dlp"]["available"] is True
+    assert "deno" in components
+    assert "ffmpeg" in components
 
 
 def test_provider_catalog_contains_expected_platforms():
