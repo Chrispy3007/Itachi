@@ -93,7 +93,7 @@ async def youtube_download(request: YouTubeDownloadRequest):
     filename = safe_filename(resolved["title"], resolved["format"]["ext"])
     command = [
         sys.executable, "-m", "yt_dlp",
-        "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
+        "--ignore-config", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
         "--no-part", "--no-cache-dir",
         "-f", request.format_id,
         "-o", "-",
