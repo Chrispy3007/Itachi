@@ -1,16 +1,21 @@
-name: Frontend build
+name: Itachi CI
+
 on:
   push:
     branches: [main]
     paths:
       - "frontend/**"
+      - "backend/**"
       - ".github/workflows/frontend-build.yml"
   pull_request:
     paths:
       - "frontend/**"
+      - "backend/**"
       - ".github/workflows/frontend-build.yml"
+
 jobs:
-  build:
+  frontend:
+    name: Frontend production build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,3 +27,19 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run build
+
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: pytest -q
