@@ -47,7 +47,7 @@ def _extract_info(url: str) -> dict:
         "extractor_retries": 2,
         "socket_timeout": 25,
         "js_runtimes": {"deno": {}},
-        "remote_components": {"ejs:github"},
+        "remote_components": ["ejs:github"],
     }
     with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(url, download=False)
