@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 from services.youtube import inspect_youtube, resolve_download, safe_filename, validate_youtube_url
@@ -78,7 +79,37 @@ def resolve_download_with_fallback(url: str, format_id: str) -> dict:
     return resolved
 
 
-def download_with_engine(url: str, resolved: dict, temp_dir: str) -> Path:
+def _run_download_command(command: list[str], timeout: int, job: dict | None = None, env=None) -> subprocess.CompletedProcess:
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    if job is not None:
+        job["process"] = process
+    deadline = time.monotonic() + timeout
+    try:
+        while True:
+            if job is not None and job.get("cancel") is not None and job["cancel"].is_set():
+                process.terminate()
+                try:
+                    process.communicate(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.communicate()
+                raise InterruptedError("Download cancelled.")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                process.kill()
+                process.communicate()
+                raise subprocess.TimeoutExpired(command, timeout)
+            try:
+                stdout, stderr = process.communicate(timeout=min(0.5, remaining))
+                return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+            except subprocess.TimeoutExpired:
+                continue
+    finally:
+        if job is not None:
+            job.pop("process", None)
+
+
+def download_with_engine(url: str, resolved: dict, temp_dir: str, job: dict | None = None) -> Path:
     if resolved["engine"] == "youtubejs":
         node = shutil.which("node")
         script = Path(__file__).resolve().parent / "youtubejs.mjs"
@@ -87,9 +118,9 @@ def download_with_engine(url: str, resolved: dict, temp_dir: str) -> Path:
         output = Path(temp_dir) / safe_filename(resolved["title"], resolved["format"].get("ext", "mp4"))
         env = os.environ.copy()
         env["ITACHI_OUTPUT_PATH"] = str(output)
-        result = subprocess.run(
+        result = _run_download_command(
             [node, str(script), "download", url, resolved["itag"]],
-            capture_output=True, text=True, timeout=1800, check=False, env=env,
+            timeout=1800, job=job, env=env,
         )
         if result.returncode or not output.is_file():
             raise RuntimeError((result.stderr or "YouTube.js download failed.")[-1200:])
@@ -103,7 +134,8 @@ def download_with_engine(url: str, resolved: dict, temp_dir: str) -> Path:
         "--merge-output-format", "mkv", "-f", resolved["format_selector"],
         "-o", output_template, url,
     ]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=1800, check=False)
+    command[command.index("-f"):command.index("-f")] = ["--max-filesize", "500M"]
+    result = _run_download_command(command, timeout=1800, job=job)
     if result.returncode:
         raise RuntimeError((result.stderr or result.stdout or "yt-dlp download failed.")[-1200:])
     files = [path for path in Path(temp_dir).iterdir() if path.is_file()]
