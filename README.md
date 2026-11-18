@@ -66,6 +66,21 @@ The current GitHub Pages frontend is static and does not host this API. To make 
 Only download videos you own or are otherwise authorized to save, and follow the applicable platform terms and copyright rules.
 
 
+## Temporary YouTube download jobs
+
+The public API supports a bounded background-job flow for authorized, single-video downloads:
+
+- `POST /api/youtube/jobs` with `{"url":"https://youtu.be/VIDEO_ID","format_id":"FORMAT_ID"}` queues a selected format and returns an opaque job ID.
+- `GET /api/youtube/jobs/{job_id}` reports queued/working/ready/error/cancelled state.
+- `POST /api/youtube/jobs/{job_id}/cancel` requests cancellation and terminates the active extractor process when possible.
+- `GET /api/youtube/jobs/{job_id}/file` retrieves the completed file.
+
+Jobs use temporary server storage, are limited to two concurrent downloads and 500 MB per file, and expire after one hour. The queue retains at most 64 jobs. These limits are conservative defaults for the current small Render deployment, not a substitute for authentication, per-user quotas, or abuse controls. Job IDs are bearer tokens: keep them private. A job status of `ready` means the server has prepared the file; it does not mean the browser has saved it.
+
+The GitHub Pages frontend uses this job flow for YouTube downloads, including status polling and a cancel action. Direct-file URLs continue to download from the browser to avoid proxying arbitrary user URLs through the public backend. The frontend does not upload media to Itachi.
+
+The job flow reports stages rather than a fabricated percentage: the current extractor adapters do not yet provide a consistent byte-level progress signal. Temporary files are deleted on cancellation/failure and pruned after expiry. The legacy synchronous endpoint remains available for compatibility.
+
 ## GitHub-only yt-dlp download (manual)
 
 The live GitHub Pages site is static, so it cannot run yt-dlp as an on-demand API. While we are avoiding a separately hosted backend, this repository includes a manually triggered GitHub Actions workflow as a temporary download path:
