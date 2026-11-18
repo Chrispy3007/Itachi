@@ -343,7 +343,7 @@ convertButton.addEventListener("click", async () => {
     const args = ["-i", inputName, "-y"];
     if (format === "mp3") {
       const bitrate = outputQuality.value === "high" ? "320k" : outputQuality.value === "small" ? "128k" : "192k";
-      args.push("-vn", "-c:a", "libmp3lame", "-b:a", bitrate);
+      args.push("-map", "0:a:0?", "-vn", "-c:a", "libmp3lame", "-b:a", bitrate);
     } else {
       const maxHeight = outputSize.value;
       if (maxHeight !== "source") {
@@ -351,10 +351,10 @@ convertButton.addEventListener("click", async () => {
       }
       if (format === "mp4") {
         const crf = outputQuality.value === "high" ? "18" : outputQuality.value === "small" ? "28" : "23";
-        args.push("-c:v", "libx264", "-preset", "ultrafast", "-crf", crf, "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart");
+        args.push("-map", "0:v:0?", "-map", "0:a:0?", "-sn", "-c:v", "libx264", "-preset", "ultrafast", "-crf", crf, "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart");
       } else {
         const crf = outputQuality.value === "high" ? "28" : outputQuality.value === "small" ? "40" : "34";
-        args.push("-c:v", "libvpx-vp9", "-deadline", "realtime", "-cpu-used", "8", "-crf", crf, "-b:v", "0", "-c:a", "libopus", "-b:a", "128k");
+        args.push("-map", "0:v:0?", "-map", "0:a:0?", "-sn", "-c:v", "libvpx-vp9", "-deadline", "realtime", "-cpu-used", "8", "-crf", crf, "-b:v", "0", "-c:a", "libopus", "-b:a", "128k");
       }
     }
     args.push(outputName);
@@ -362,7 +362,7 @@ convertButton.addEventListener("click", async () => {
     await engine.exec(args);
     const data = await engine.readFile(outputName);
     const mime = format === "mp4" ? "video/mp4" : format === "webm" ? "video/webm" : "audio/mpeg";
-    convertedUrl = URL.createObjectURL(new Blob([data.buffer], { type: mime }));
+    convertedUrl = URL.createObjectURL(new Blob([data], { type: mime }));
     const baseName = currentFile.name.replace(/\\.[^.]+$/, "") || "itachi-media";
     convertedDownload.href = convertedUrl;
     convertedDownload.download = baseName + "." + format;
