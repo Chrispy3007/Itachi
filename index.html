@@ -81,8 +81,63 @@ form.addEventListener("submit", async event=>{
  if(isHost(host,["instagram.com","instagr.am"])){showProviderMessage("Instagram link recognized","Instagram posts and reels are not direct media files. Itachi cannot extract protected streams from the page. Use Instagram's own download/save options where available, or paste a direct media-file URL you are authorized to save.",parsed.href);return;}
  if(isHost(host,["tiktok.com","vm.tiktok.com"])){showProviderMessage("TikTok link recognized","This is a TikTok page link, not a direct media file. Use TikTok's in-app Save video option when the creator has enabled it, or paste a direct media-file URL you are authorized to save.",parsed.href);return;}
  if(isHost(host,["spotify.com","open.spotify.com"])){showProviderMessage("Spotify link recognized","Spotify links identify music or podcasts, but Spotify does not expose downloadable audio files through its public metadata features. Use Spotify's official offline-listening feature where available.",parsed.href);return;}
- await downloadDirectFile(parsed);
+ await inspectDirectFile(parsed);
 });
+
+async function inspectDirectFile(parsed){
+ button.disabled=true;
+ button.textContent="Inspecting…";
+ result.className="result show";
+ result.replaceChildren();
+ const heading=document.createElement("strong");
+ heading.textContent="Checking the original media file";
+ const detail=document.createElement("div");
+ detail.textContent="Reading file information from the source. No media is downloaded during this check.";
+ const status=document.createElement("small");
+ status.textContent="Checking file type, size and available source details…";
+ result.append(heading,detail,status);
+ try{
+   let response=await fetch(parsed.href,{method:"HEAD",mode:"cors",credentials:"omit",redirect:"follow"});
+   if(!response.ok){
+     response=await fetch(parsed.href,{method:"GET",headers:{Range:"bytes=0-0"},mode:"cors",credentials:"omit",redirect:"follow"});
+     if(response.body) await response.body.cancel();
+   }
+   if(!response.ok && response.status!==206) throw new Error("The source returned HTTP "+response.status+".");
+   const type=(response.headers.get("content-type")||"application/octet-stream").split(";")[0].trim().toLowerCase();
+   if(type==="text/html"||type==="application/json"||type==="text/plain"||type.includes("javascript")) throw new Error("That link points to a webpage or text response, not a direct media file. Try the file's direct URL.");
+   const fileName=getResponseFileName(response,parsed);
+   const range=response.headers.get("content-range")||"";
+   const rangeTotal=range.includes("/")?Number(range.slice(range.lastIndexOf("/")+1)):0;
+   const length=rangeTotal||(Number(response.headers.get("content-length"))||0);
+   const size=length?formatBytes(length):"Not provided by source";
+   const isMedia=type.startsWith("video/")||type.startsWith("audio/")||type.startsWith("image/");
+   const rows=[["File",fileName],["Type",type==="application/octet-stream"?"Unknown (generic binary)":type],["Size",size],["Available version","Original file only"]];
+   const meta=document.createElement("div");
+   meta.style.cssText="display:grid;grid-template-columns:minmax(85px,auto) 1fr;gap:6px 12px;margin-top:10px";
+   for(const [label,value] of rows){
+     const key=document.createElement("span");key.style.color="#94838b";key.textContent=label;
+     const val=document.createElement("span");val.style.color="#eee2e7";val.textContent=value;
+     meta.append(key,val);
+   }
+   const explanation=document.createElement("small");
+   explanation.textContent=isMedia
+     ?"The host exposes one direct file. Itachi will preserve its original format and quality; no extra resolutions or encodes are advertised unless the source provides them."
+     :"The host exposes a file, but its media type is not confirmed. The original file can still be saved if this is the intended file.";
+   const download=document.createElement("button");
+   download.type="button";download.className="primary";download.textContent="Download original file ↓";
+   download.style.marginTop="13px";
+   download.addEventListener("click",()=>downloadDirectFile(parsed));
+   result.append(meta,explanation,download);
+ }catch(error){
+   heading.textContent="Could not inspect this link";
+   detail.textContent=error.message||"The source did not allow browser inspection.";
+   status.textContent="This host may block browser access (CORS), or this may not be a direct file URL. Try a direct public media URL from a host that allows browser access.";
+   const link=document.createElement("a");link.href=parsed.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open the original source";link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";result.append(link);
+ }finally{
+   button.disabled=false;
+   button.textContent="Check link ↓";
+ }
+}
 
 async function downloadDirectFile(parsed){
  const suggestedName=getFileName(parsed);
