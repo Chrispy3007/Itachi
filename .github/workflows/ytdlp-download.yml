@@ -1,0 +1,82 @@
+name: Download with yt-dlp
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Public YouTube video URL (content you are allowed to download)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ytdlp-download-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  download:
+    name: Fetch one authorized public video
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate YouTube URL
+        env:
+          VIDEO_URL: ${{ inputs.url }}
+        run: |
+          python - <<'PY'
+          import os
+          from urllib.parse import urlparse
+
+          value = os.environ["VIDEO_URL"].strip()
+          parsed = urlparse(value)
+          allowed_hosts = {
+              "youtube.com",
+              "www.youtube.com",
+              "m.youtube.com",
+              "music.youtube.com",
+              "youtu.be",
+              "youtube-nocookie.com",
+              "www.youtube-nocookie.com",
+          }
+          if parsed.scheme != "https" or (parsed.hostname or "").lower() not in allowed_hosts:
+              raise SystemExit("Enter an HTTPS URL from YouTube or youtu.be.")
+          if parsed.username or parsed.password:
+              raise SystemExit("URLs containing credentials are not accepted.")
+          if not parsed.path or parsed.path == "/":
+              raise SystemExit("The URL must identify a video.")
+          print("YouTube URL accepted.")
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install yt-dlp
+        run: python -m pip install --upgrade yt-dlp
+
+      - name: Download best available single-file format
+        env:
+          VIDEO_URL: ${{ inputs.url }}
+        run: |
+          mkdir -p downloads
+          yt-dlp \
+            --ignore-config \
+            --no-playlist \
+            --no-warnings \
+            --no-progress \
+            --restrict-filenames \
+            --max-filesize 500M \
+            --format "best[acodec!=none][vcodec!=none]/best" \
+            --output "downloads/%(title).160B-%(id)s.%(ext)s" \
+            "$VIDEO_URL"
+
+      - name: Upload downloaded file
+        uses: actions/upload-artifact@v4
+        with:
+          name: itachi-download
+          path: downloads/*
+          if-no-files-found: error
+          retention-days: 1
