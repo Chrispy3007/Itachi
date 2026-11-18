@@ -41,3 +41,26 @@ This app does not bypass DRM, login walls, private-account restrictions, or plat
 - Deploy `backend` as a separate Python web service on Render/Railway.
 - Set `NEXT_PUBLIC_API_BASE` to the deployed API URL.
 - Configure provider credentials as backend environment variables only; never commit secrets.
+
+## YouTube backend (yt-dlp)
+
+The FastAPI backend now includes two YouTube-specific endpoints:
+
+- `POST /api/youtube/inspect` with JSON `{"url":"https://www.youtube.com/watch?v=VIDEO_ID"}` returns the video's metadata and only the single-file HTTP formats that already contain both audio and video.
+- `POST /api/youtube/download` with JSON `{"url":"https://www.youtube.com/watch?v=VIDEO_ID","format_id":"FORMAT_ID"}` streams the selected original format through the API response. The backend does not keep a permanent media copy.
+
+Run the API locally:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+The YouTube endpoints deliberately do not use browser cookies or private-account access. DRM-marked formats, live streams, and separate video-only/audio-only formats are not offered. This first version therefore shows only formats that can be delivered as a single file without a server-side merge; the available resolutions depend on what YouTube exposes for each video. yt-dlp and YouTube delivery behavior can change, so a successful inspection is not guaranteed for every public link.
+
+The current GitHub Pages frontend is static and does not host this API. To make YouTube formats and downloads appear on the live site, deploy the `backend` as a separate service and configure the frontend to call that API. Do not expose an unprotected public download API to heavy traffic; add appropriate rate limits and operational monitoring before production use.
+
+Only download videos you own or are otherwise authorized to save, and follow the applicable platform terms and copyright rules.
