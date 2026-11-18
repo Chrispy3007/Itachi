@@ -28,13 +28,13 @@ export default function Home() {
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><Eye size={20}/></div><div>ITACHI<small>SHADOW MEDIA VAULT</small></div></div>
       <div className="side-label">HIDEOUT</div>
-      <a className="nav active"><Video size={16}/> Link inspector</a>
-      <a className="nav"><Clock3 size={16}/> Activity log <span className="soon">SOON</span></a>
-      <a className="nav"><AudioLines size={16}/> Media tools <span className="soon">SOON</span></a>
+      <div className="nav active" aria-current="page"><Video size={16}/> Link inspector</div>
+      <div className="nav" aria-disabled="true"><Clock3 size={16}/> Activity log <span className="soon">SOON</span></div>
+      <div className="nav" aria-disabled="true"><AudioLines size={16}/> Media tools <span className="soon">SOON</span></div>
       <div className="side-bottom"><ShieldCheck size={17}/><div><b>Quietly protected</b><p>Personal workspace. Your links stay yours.</p></div></div>
     </aside>
     <section className="main">
-      <header className="topbar"><div className="crumb">The hideout <span>/</span> Link inspector</div><div className="top-pill"><span className="dot"/> PRIVATE WORKSPACE</div></header>
+      <header className="topbar"><div className="crumb">The hideout <span>/</span> Link inspector</div><div className="top-pill"><span className="dot"/> PERSONAL WORKSPACE</div></header>
       <div className="content">
         <div className="eyebrow"><Sparkles size={13}/> <span>THE SHADOW MEDIA VAULT</span></div>
         <h1>Move in <span>silence.</span><br/>Keep your media close.</h1>
@@ -47,7 +47,7 @@ export default function Home() {
           <div className="supported"><strong>SUPPORTED SOURCES</strong>{platforms.map(p=><span className="source" key={p.id}>{p.name}</span>)}</div>
         </section>
         <div className="section-heading"><div><h2>Five platforms. One hideout.</h2><p>Platform-specific integrations will be enabled through official access.</p></div><span className="count">05 SOURCES</span></div>
-        <div className="platform-grid">{platforms.map(p=>{const Icon=p.icon;return <article className="platform-card" key={p.id}><div className="platform-top"><div className="platform-icon" style={{color:p.color}}><Icon size={21}/></div><span className="status">READY FOR INTEGRATION</span></div><h3>{p.name}</h3><p>{p.detail}</p><div className="card-foot"><span>Integration details</span><ExternalLink size={13}/></div></article>})}</div>
+        <div className="platform-grid">{platforms.map(p=>{const Icon=p.icon;return <article className="platform-card" key={p.id}><div className="platform-top"><div className="platform-icon" style={{color:p.color}}><Icon size={21}/></div><span className="status">PLATFORM OVERVIEW</span></div><h3>{p.name}</h3><p>{p.detail}</p><div className="card-foot"><span>Capability overview</span><ExternalLink size={13}/></div></article>})}</div>
         <div className="notice"><CircleHelp size={18}/><div><b>Respect the source. Protect the vault.</b><p>This starter does not bypass DRM, private-account restrictions, login walls or platform download controls. Spotify supports metadata and playlist information through its official API, not extracting streamed tracks. Download features will be enabled only for content you own or are authorized to save.</p></div></div>
         <footer>ITACHI <span>•</span> SHADOW MEDIA VAULT <span className="foot-right">VERSION 0.1.0</span></footer>
       </div>
