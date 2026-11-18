@@ -106,6 +106,16 @@ Itachi's product goal is a simple flow: paste a link, inspect the real downloada
 - Instagram, TikTok and Facebook: the provider detector recognizes links, but recognition is not the same as a working downloader. Do not advertise these providers as download-ready until an authorized extraction/API adapter is implemented and tested.
 - Spotify: metadata recognition only; Itachi does not extract Spotify-streamed audio.
 
+### YouTube extraction engines
+
+The backend now has a small extraction-engine orchestrator. yt-dlp remains the primary engine; a YouTube.js adapter is installed as a secondary engine for extractor compatibility failures. The adapter returns only single-file audio/video formats and can download a selected format through the same temporary-file delivery path.
+
+Fallback is deliberately not attempted after an explicit YouTube sign-in, bot-verification, private-video, DRM, or access-denial response. Switching extractor libraries does not grant permission to evade a provider's access controls, and it does not guarantee that a different library will be accepted from the same hosting network.
+
+NewPipe and Cobalt are research candidates, not active extraction engines in this deployment yet. NewPipe requires a separately packaged JVM service and GPL-3.0 compliance review. Cobalt requires a separately deployed instance/API and AGPL-3.0 compliance review. The health endpoint reports these as unavailable/not configured rather than claiming they are active.
+
+The Render Docker image now installs Node.js/npm for YouTube.js. The health endpoint reports engine availability. A successful health response verifies installed components only; it does not prove that YouTube will accept a request or that a real media download will complete.
+
 ### Runtime diagnostics
 
 `GET /health` reports the installed yt-dlp version and whether Deno and FFmpeg executables are available in the running container. A healthy API response alone does not prove that a particular platform will permit extraction or that a full download will complete.
