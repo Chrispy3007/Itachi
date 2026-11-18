@@ -64,3 +64,17 @@ The YouTube endpoints deliberately do not use browser cookies or private-account
 The current GitHub Pages frontend is static and does not host this API. To make YouTube formats and downloads appear on the live site, deploy the `backend` as a separate service and configure the frontend to call that API. Do not expose an unprotected public download API to heavy traffic; add appropriate rate limits and operational monitoring before production use.
 
 Only download videos you own or are otherwise authorized to save, and follow the applicable platform terms and copyright rules.
+
+
+## GitHub-only yt-dlp download (manual)
+
+The live GitHub Pages site is static, so it cannot run yt-dlp as an on-demand API. While we are avoiding a separately hosted backend, this repository includes a manually triggered GitHub Actions workflow as a temporary download path:
+
+1. Open the repository's **Actions** tab.
+2. Select **Download with yt-dlp**.
+3. Choose **Run workflow**, paste an HTTPS YouTube video URL, and start the run.
+4. When the run finishes, open it and download the **itachi-download** artifact.
+
+The workflow runs on a temporary GitHub-hosted runner, accepts YouTube URLs only, requests one video (not a playlist), limits the download to 500 MB, and keeps the artifact for one day. It does not use browser cookies, sign in to accounts, access private videos, or bypass DRM. It selects the best available single-file format containing both audio and video; it does not merge separate streams or convert media. Some videos may not offer a suitable format, and GitHub Actions usage limits apply.
+
+This is a manual GitHub Actions workflow, not a direct download button on the Pages website. Use it only for videos you own or have permission to save, and comply with applicable platform terms and copyright rules.
