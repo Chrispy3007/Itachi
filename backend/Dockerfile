@@ -5,15 +5,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DENO_INSTALL=/usr/local
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl unzip ffmpeg \
-    && rm -rf /var/lib/apt/lists/* \
+    && apt-get install -y --no-install-recommends ca-certificates curl unzip ffmpeg nodejs npm \
+    && rm -rf /var/lib/apt/lists/ \
     && curl -fsSL https://deno.land/install.sh | sh \
-    && deno --version
+    && deno --version \
+    && node --version
 
 WORKDIR /app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY package.json package-lock.json* ./
+RUN npm install --omit=dev --no-audit --no-fund
 
 COPY . .
 
