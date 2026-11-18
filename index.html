@@ -257,7 +257,7 @@ async function loadYouTubeFormats(url,container,state,detail){
      const info=document.createElement("div");
      info.style.cssText="min-width:0;font-size:10px;color:#eee2e7";
      const label=document.createElement("strong");
-     label.textContent=[format.resolution||"Video",String(format.ext||"file").toUpperCase(),format.fps?format.fps+" fps":""].filter(Boolean).join(" · ");
+     label.textContent=[format.resolution||"Video",String(format.ext||"file").toUpperCase(),format.fps?format.fps+" fps":"",format.needs_merge?"audio merged":""].filter(Boolean).join(" · ");
      label.style.margin="0";
      const size=document.createElement("small");
      size.textContent=format.filesize?formatBytes(format.filesize):"File size not provided";
@@ -343,7 +343,7 @@ async function showYouTubePreview(id,url){
  const channel=document.createElement("div");channel.style.color="#b9aab1";channel.textContent="Channel details unavailable";
  details.append(title,channel);preview.append(thumbnail,details);
  const note=document.createElement("small");
- note.textContent="Download options are loaded from Itachi's yt-dlp backend. Only formats returned by the source are shown; separate streams that need merging are not listed in this first version.";
+ note.textContent="Download options are loaded from Itachi's yt-dlp backend. All supported video resolutions are listed, including adaptive video streams paired with audio and merged during download.";
  const availability=document.createElement("div");
  availability.id="youtube-download-options";
  availability.style.cssText="margin-top:13px;padding:13px;border:1px solid #49303a;border-radius:7px;background:#100e12";
@@ -353,7 +353,7 @@ async function showYouTubePreview(id,url){
  availabilityState.style.cssText="margin-top:5px;color:#f0c6ce;font-size:10px;font-weight:700";
  availabilityState.textContent=ITACHI_API_BASE?"Checking available formats…":"yt-dlp backend is not connected to this site yet.";
  const availabilityDetail=document.createElement("small");
- availabilityDetail.textContent=ITACHI_API_BASE?"Checking which single-file formats are actually available.":"The backend code is ready, but a deployed API URL must be configured before download options can appear.";
+ availabilityDetail.textContent=ITACHI_API_BASE?"Checking available video resolutions and audio pairing options.":"The backend code is ready, but a deployed API URL must be configured before download options can appear.";
  availability.append(availabilityTitle,availabilityState,availabilityDetail);
  const frame=document.createElement("iframe");frame.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(id);frame.title="YouTube video preview";frame.loading="lazy";frame.referrerPolicy="strict-origin-when-cross-origin";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;
  frame.style.cssText="display:block;width:100%;max-width:560px;aspect-ratio:16/9;border:1px solid #49303a;border-radius:8px;margin-top:13px;background:#080609";
