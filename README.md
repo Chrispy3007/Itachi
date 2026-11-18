@@ -93,3 +93,23 @@ The repository includes a Render Blueprint for the FastAPI + yt-dlp service:
 The Blueprint uses Render's free web-service plan, configures the GitHub Pages origin for CORS, and uses `/health` for deployment health checks. Render free web services spin down after a period without inbound traffic, so the first request after inactivity can be delayed. Free-plan availability and limits are controlled by Render and may change.
 
 No persistent disk or database is configured. The API streams downloads and does not intentionally retain media files. This is a small free-tier deployment intended for personal/testing use, not an unrestricted public download service. Use it only for media you own or are authorized to save and follow provider terms.
+
+
+## Balanced product direction and current capabilities
+
+Itachi's product goal is a simple flow: paste a link, inspect the real downloadable options, choose a quality, and save the file to the user's device. The website is hosted on GitHub Pages and the API is deployed separately on Render.
+
+### Current implementation status
+
+- YouTube: yt-dlp inspection is implemented. The API lists downloadable video streams, including adaptive video-only formats; adaptive downloads pair the selected video with the best available audio and merge with FFmpeg into MKV. Availability depends on the video's exposed formats and whether YouTube accepts the request from the service's network.
+- Direct media URLs: the browser can inspect and download direct files when the source permits browser access (including CORS).
+- Instagram, TikTok and Facebook: the provider detector recognizes links, but recognition is not the same as a working downloader. Do not advertise these providers as download-ready until an authorized extraction/API adapter is implemented and tested.
+- Spotify: metadata recognition only; Itachi does not extract Spotify-streamed audio.
+
+### Runtime diagnostics
+
+`GET /health` reports the installed yt-dlp version and whether Deno and FFmpeg executables are available in the running container. A healthy API response alone does not prove that a particular platform will permit extraction or that a full download will complete.
+
+### Product guarantees
+
+Only display formats returned by the source and supported by the backend. Never invent resolutions, file sizes, or availability. Do not bypass DRM, private/login-only restrictions, or provider access controls. Temporary files used for stream merging must be removed after delivery; no permanent media library is maintained on the server.
