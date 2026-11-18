@@ -1,15 +1,12 @@
 services:
   - type: web
     name: itachi-media-api
-    runtime: python
+    runtime: docker
     plan: free
-    rootDir: backend
-    buildCommand: 'curl -fsSL https://deno.land/install.sh | DENO_INSTALL="$HOME/.deno" sh && pip install -r requirements.txt'
-    startCommand: 'export PATH="$HOME/.deno/bin:$PATH" && uvicorn main:app --host 0.0.0.0 --port $PORT'
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /health
     autoDeploy: true
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.11
       - key: FRONTEND_ORIGINS
         value: https://chrispy3007.github.io
