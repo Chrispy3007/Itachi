@@ -1,0 +1,8 @@
+{
+  "name": "itachi-youtube-adapters",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "youtubei.js": "^16.0.0"
+  }
+}
