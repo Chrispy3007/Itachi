@@ -16,7 +16,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY package.json package-lock.json* ./
+COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 
 COPY . .
