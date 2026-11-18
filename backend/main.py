@@ -78,8 +78,10 @@ async def youtube_inspect(request: InspectRequest):
         import logging
         logging.getLogger("itachi.youtube").exception("YouTube inspection failed")
         message = str(exc).lower()
-        if "javascript" in message or "js challenge" in message or "ejs" in message:
-            detail = "YouTube extraction needs the JavaScript challenge components. Check that yt-dlp-ejs and Deno installed successfully in the latest Render deploy."
+        if "deno" in message:
+            detail = "The Deno JavaScript runtime is not available to the running Render service. Redeploy the latest commit and check the build logs for the Deno installation step."
+        elif "javascript" in message or "js challenge" in message or "ejs" in message:
+            detail = "YouTube's JavaScript challenge could not be solved. Check the Render logs for yt-dlp's EJS/runtime diagnostics."
         elif "sign in" in message or "bot" in message or "confirm you're not a bot" in message:
             detail = "YouTube declined this request or requested sign-in. Itachi does not use account cookies or bypass access controls."
         elif "private" in message or "unavailable" in message or "not available" in message:
