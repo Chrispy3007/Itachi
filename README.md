@@ -78,3 +78,18 @@ The live GitHub Pages site is static, so it cannot run yt-dlp as an on-demand AP
 The workflow runs on a temporary GitHub-hosted runner, accepts YouTube URLs only, requests one video (not a playlist), limits the download to 500 MB, and keeps the artifact for one day. It does not use browser cookies, sign in to accounts, access private videos, or bypass DRM. It selects the best available single-file format containing both audio and video; it does not merge separate streams or convert media. Some videos may not offer a suitable format, and GitHub Actions usage limits apply.
 
 This is a manual GitHub Actions workflow, not a direct download button on the Pages website. Use it only for videos you own or have permission to save, and comply with applicable platform terms and copyright rules.
+
+
+## Deploy the API on Render
+
+The repository includes a Render Blueprint for the FastAPI + yt-dlp service:
+
+1. Sign in to Render and choose **New → Blueprint**.
+2. Connect the `Chrispy3007/Itachi` GitHub repository.
+3. Select the `main` branch and deploy the Blueprint from the repository's `render.yaml`.
+4. Wait for the service to finish deploying, then open its **`/health`** URL. A healthy service returns JSON with `"status": "ok"`.
+5. Copy the service's public `onrender.com` URL. The GitHub Pages frontend must be configured with this exact API base URL as `window.ITACHI_API_BASE`; do not include a trailing slash.
+
+The Blueprint uses Render's free web-service plan, configures the GitHub Pages origin for CORS, and uses `/health` for deployment health checks. Render free web services spin down after a period without inbound traffic, so the first request after inactivity can be delayed. Free-plan availability and limits are controlled by Render and may change.
+
+No persistent disk or database is configured. The API streams downloads and does not intentionally retain media files. This is a small free-tier deployment intended for personal/testing use, not an unrestricted public download service. Use it only for media you own or are authorized to save and follow provider terms.
