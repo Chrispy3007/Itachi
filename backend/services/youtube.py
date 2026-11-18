@@ -32,15 +32,19 @@ def validate_youtube_url(raw_url: str) -> str:
 
 
 def _extract_info(url: str) -> dict:
+    # yt-dlp's current YouTube extractor uses yt-dlp-ejs and a supported
+    # JavaScript runtime for the full extraction path. Deno is installed on Render.
     options = {
         "quiet": True,
-        "no_warnings": True,
+        "no_warnings": False,
         "noplaylist": True,
         "skip_download": True,
         "cachedir": False,
         "ignoreerrors": False,
-        "extractor_retries": 1,
-        "socket_timeout": 15,
+        "extractor_retries": 2,
+        "socket_timeout": 25,
+        "js_runtimes": {"deno": {}},
+        "remote_components": {"ejs:github"},
     }
     with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(url, download=False)
@@ -58,8 +62,7 @@ def inspect_youtube(url: str) -> dict:
     info = _extract_info(url)
     formats = []
     for item in info.get("formats", []):
-        # Only offer single-file HTTP formats that already contain both
-        # audio and video. This avoids server-side merging and fake options.
+        # Show only single-file formats containing both audio and video.
         if item.get("has_drm"):
             continue
         if item.get("vcodec") in (None, "none") or item.get("acodec") in (None, "none"):
