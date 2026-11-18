@@ -105,7 +105,7 @@ async def youtube_download(request: YouTubeDownloadRequest):
     command = [
         sys.executable, "-m", "yt_dlp",
         "--ignore-config", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
-        "--no-part", "--no-cache-dir",
+        "--no-part", "--no-cache-dir", "--remote-components", "ejs:github",
         "-f", request.format_id,
         "-o", "-",
         url,
