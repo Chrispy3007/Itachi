@@ -1,4 +1,5 @@
 import re
+import shutil
 from urllib.parse import urlparse
 
 import yt_dlp
@@ -32,8 +33,10 @@ def validate_youtube_url(raw_url: str) -> str:
 
 
 def _extract_info(url: str) -> dict:
-    # yt-dlp's current YouTube extractor uses yt-dlp-ejs and a supported
-    # JavaScript runtime for the full extraction path. Deno is installed on Render.
+    # YouTube's current player challenge requires a supported JS runtime.
+    # Render installs Deno in the build command and adds it to PATH at startup.
+    if not shutil.which("deno"):
+        raise RuntimeError("Deno JavaScript runtime is missing from PATH on the Render service.")
     options = {
         "quiet": True,
         "no_warnings": False,
