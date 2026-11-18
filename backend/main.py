@@ -5,9 +5,18 @@ from pydantic import BaseModel, HttpUrl
 from services.detector import inspect_url, PROVIDERS
 
 app = FastAPI(title="Itachi Shadow Media Vault API", version="0.1.0")
+
+# GitHub Pages serves the current static frontend. Keep local development and
+# Pages enabled by default, while allowing deployments to override the list.
+default_origins = "http://localhost:3000,https://chrispy3007.github.io"
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_ORIGINS", os.getenv("FRONTEND_ORIGIN", default_origins)).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
