@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import os
 import shutil
@@ -113,7 +114,7 @@ def download_with_engine(url: str, resolved: dict, temp_dir: str) -> Path:
 
 def engine_health() -> dict:
     return {
-        "yt_dlp": {"available": shutil.which("python") is not None},
+        "yt_dlp": {"available": importlib.util.find_spec("yt_dlp") is not None},
         "youtubejs": {"available": shutil.which("node") is not None and (Path(__file__).resolve().parent / "youtubejs.mjs").is_file()},
         "newpipe": {"available": False, "reason": "Isolated adapter not installed yet."},
         "cobalt": {"available": bool(os.getenv("COBALT_API_URL")), "mode": "remote API" if os.getenv("COBALT_API_URL") else "not configured"},
