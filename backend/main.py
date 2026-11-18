@@ -45,7 +45,18 @@ class YouTubeDownloadRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "itachi-media-api"}
+    import yt_dlp
+    deno_path = shutil.which("deno")
+    ffmpeg_path = shutil.which("ffmpeg")
+    return {
+        "status": "ok",
+        "service": "itachi-media-api",
+        "components": {
+            "yt_dlp": {"available": True, "version": yt_dlp.version.__version__},
+            "deno": {"available": bool(deno_path), "path": deno_path},
+            "ffmpeg": {"available": bool(ffmpeg_path), "path": ffmpeg_path},
+        },
+    }
 
 
 @app.get("/api/providers")
