@@ -9,7 +9,7 @@ from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from starlette.background import BackgroundTask
 from pydantic import BaseModel, HttpUrl
 from starlette.concurrency import run_in_threadpool
@@ -17,6 +17,7 @@ from starlette.concurrency import run_in_threadpool
 from services.detector import inspect_url, PROVIDERS
 from services.youtube import safe_filename, validate_youtube_url
 from services.youtube_engines import inspect_with_fallback, resolve_download_with_fallback, download_with_engine, engine_health
+from services import download_jobs
 
 app = FastAPI(title="Itachi Shadow Media Vault API", version="0.2.0")
 
@@ -107,6 +108,47 @@ async def youtube_inspect(request: InspectRequest):
             detail = "yt-dlp could not inspect this video. Check the Render service logs for the extractor error and try a different public video."
         raise HTTPException(status_code=502, detail=detail) from exc
 
+
+
+
+@app.post("/api/youtube/jobs", status_code=202)
+def create_youtube_job(request: YouTubeDownloadRequest):
+    try:
+        return download_jobs.create_job(str(request.url), request.format_id)
+    except ValueError as exc:
+        status = 429 if "busy" in str(exc).lower() or "queue" in str(exc).lower() else 422
+        raise HTTPException(status_code=status, detail=str(exc))
+
+
+@app.get("/api/youtube/jobs/{job_id}")
+def youtube_job_status(job_id: str):
+    job = download_jobs.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="This download job expired or does not exist.")
+    return job
+
+
+@app.post("/api/youtube/jobs/{job_id}/cancel")
+def cancel_youtube_job(job_id: str):
+    job = download_jobs.cancel_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="This download job expired or does not exist.")
+    return job
+
+
+@app.get("/api/youtube/jobs/{job_id}/file")
+def download_youtube_job_file(job_id: str):
+    result = download_jobs.get_file(job_id)
+    if not result:
+        raise HTTPException(status_code=409, detail="The download is not ready or has expired.")
+    path, filename, size = result
+    media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    return FileResponse(
+        path,
+        media_type=media_type,
+        filename=filename,
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
 
 @app.post("/api/youtube/download")
 async def youtube_download(request: YouTubeDownloadRequest):
