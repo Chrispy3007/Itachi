@@ -9,5 +9,7 @@ services:
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
       - key: FRONTEND_ORIGINS
         value: https://chrispy3007.github.io
