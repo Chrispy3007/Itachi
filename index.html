@@ -141,20 +141,26 @@ async function inspectDirectFile(parsed){
 
 async function downloadDirectFile(parsed){
  const suggestedName=getFileName(parsed);
- let saveHandlePromise=null;
- if(window.isSecureContext && "showSaveFilePicker" in window){
-   try{saveHandlePromise=window.showSaveFilePicker({suggestedName});}
-   catch(error){if(error.name==="AbortError")return;saveHandlePromise=null;}
+ let fileHandle=null;
+ // The picker must be opened directly from the user's click gesture.
+ if(window.isSecureContext && typeof window.showSaveFilePicker==="function"){
+   try{
+     fileHandle=await window.showSaveFilePicker({suggestedName});
+   }catch(error){
+     if(error && error.name==="AbortError")return;
+     showMessage("Save dialog unavailable","Your browser could not open the save dialog. Itachi will try the standard browser download instead.");
+   }
  }
  button.disabled=true;
- button.textContent="Connecting…";
+ button.textContent="Downloading…";
  result.className="result show";
+ result.replaceChildren();
  const heading=document.createElement("strong");
  heading.textContent="Preparing your download";
  const detail=document.createElement("div");
  detail.textContent="Connecting directly to the file source. Your media is not uploaded to Itachi.";
  const progress=document.createElement("progress");
- progress.max=100; progress.value=0;
+ progress.max=100;progress.value=0;
  progress.style.cssText="display:block;width:100%;height:7px;margin-top:12px;accent-color:#d84a5b";
  const status=document.createElement("small");
  status.textContent="Waiting for the source…";
@@ -163,29 +169,73 @@ async function downloadDirectFile(parsed){
    const response=await fetch(parsed.href,{method:"GET",mode:"cors",credentials:"omit",redirect:"follow"});
    if(!response.ok)throw new Error("The source returned HTTP "+response.status+".");
    const type=(response.headers.get("content-type")||"application/octet-stream").split(";")[0].trim().toLowerCase();
-   if(type==="text/html"||type==="application/json"||type==="text/plain"||type.includes("javascript"))throw new Error("That URL returned a webpage or text response, not a media file. Paste a direct file URL.");
+   if(type==="text/html"||type==="application/json"||type==="text/plain"||type.includes("javascript")||type.includes("xml")){
+     throw new Error("That URL returned a webpage or text response, not a media file. Paste a direct file URL.");
+   }
    const fileName=getResponseFileName(response,parsed);
    const total=Number(response.headers.get("content-length"))||0;
+   if(!response.body || !response.body.getReader)throw new Error("This browser cannot stream the response. Try a modern browser or open the source directly.");
    if(total){detail.textContent="Downloading "+formatBytes(total)+" directly from the source.";progress.max=total;progress.value=0;}
    else{detail.textContent="Downloading directly from the source. File size is not provided.";progress.removeAttribute("value");}
-   const fileHandle=saveHandlePromise?await saveHandlePromise:null;
-   if(fileHandle && response.body && response.body.getReader){
-     const writable=await fileHandle.createWritable(),reader=response.body.getReader();
-     let received=0;
-     try{while(true){const part=await reader.read();if(part.done)break;await writable.write(part.value);received+=part.value.byteLength;if(total){progress.value=received;status.textContent=formatBytes(received)+" of "+formatBytes(total)+" · "+Math.round(received/total*100)+"%";}else status.textContent=formatBytes(received)+" downloaded";}await writable.close();}
-     catch(error){await writable.abort();throw error;}
-     heading.textContent="Download complete";detail.textContent=fileName+" has been saved to your chosen location.";status.textContent=formatBytes(received)+" saved on your device.";progress.value=100;progress.max=100;
+   const reader=response.body.getReader();
+   let received=0;
+   if(fileHandle){
+     const writable=await fileHandle.createWritable();
+     try{
+       while(true){
+         const part=await reader.read();
+         if(part.done)break;
+         await writable.write(part.value);
+         received+=part.value.byteLength;
+         if(total){progress.value=received;status.textContent=formatBytes(received)+" of "+formatBytes(total)+" · "+Math.round(received/total*100)+"%";}
+         else status.textContent=formatBytes(received)+" downloaded";
+       }
+       await writable.close();
+     }catch(error){
+       try{await writable.abort();}catch{}
+       throw error;
+     }
+     heading.textContent="Download complete";
+     detail.textContent=fileName+" has been saved to your chosen location.";
+     status.textContent=formatBytes(received)+" saved on your device.";
+     progress.max=100;progress.value=100;
    }else{
-     status.textContent="Receiving file…";
-     const blob=await response.blob(),objectUrl=URL.createObjectURL(blob),link=document.createElement("a");
-     link.href=objectUrl;link.download=fileName;link.style.display="none";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
-     heading.textContent="Download started";detail.textContent="Your browser has been asked to save "+fileName+". This browser may temporarily use memory while preparing the file.";progress.max=100;progress.value=100;status.textContent=formatBytes(blob.size)+" received from source.";
+     // Fallback for browsers without the File System Access API.
+     // Chunks are kept in memory until the browser can create the download.
+     const chunks=[];
+     while(true){
+       const part=await reader.read();
+       if(part.done)break;
+       chunks.push(part.value);
+       received+=part.value.byteLength;
+       if(total){progress.max=total;progress.value=received;status.textContent=formatBytes(received)+" of "+formatBytes(total)+" · "+Math.round(received/total*100)+"%";}
+       else status.textContent=formatBytes(received)+" received";
+     }
+     const blob=new Blob(chunks,{type:type==="application/octet-stream"?"application/octet-stream":type});
+     const objectUrl=URL.createObjectURL(blob);
+     const link=document.createElement("a");
+     link.href=objectUrl;link.download=fileName;link.style.display="none";
+     document.body.append(link);link.click();link.remove();
+     setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+     heading.textContent="Download started";
+     detail.textContent="Your browser has been asked to save "+fileName+". This fallback temporarily uses device memory while preparing the file.";
+     progress.max=100;progress.value=100;
+     status.textContent=formatBytes(blob.size)+" received from source.";
    }
  }catch(error){
-   heading.textContent="Could not download this URL";detail.textContent=error.message||"The source did not allow a browser download.";progress.hidden=true;
-   status.textContent="Some hosts block browser access (CORS). Try a direct public file URL from a host that allows browser downloads.";
-   const link=document.createElement("a");link.href=parsed.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open the original source";link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";result.append(link);
- }finally{button.disabled=false;button.textContent="Check link ↓";}
+   heading.textContent="Could not download this URL";
+   detail.textContent=error.message||"The source did not allow a browser download.";
+   progress.hidden=true;
+   status.textContent="Some hosts block browser access (CORS), require a login, or do not expose a direct file. Itachi cannot bypass those restrictions.";
+   const link=document.createElement("a");
+   link.href=parsed.href;link.target="_blank";link.rel="noopener noreferrer";
+   link.textContent="Open the original source";
+   link.style.cssText="display:inline-block;margin-top:10px;color:#f07882";
+   result.append(link);
+ }finally{
+   button.disabled=false;
+   button.textContent="Check link ↓";
+ }
 }
 
 function getYouTubeId(url){
