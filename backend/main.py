@@ -1,12 +1,16 @@
 import mimetypes
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from starlette.background import BackgroundTask
 from pydantic import BaseModel, HttpUrl
 from starlette.concurrency import run_in_threadpool
 
@@ -93,67 +97,72 @@ async def youtube_inspect(request: InspectRequest):
 
 @app.post("/api/youtube/download")
 async def youtube_download(request: YouTubeDownloadRequest):
+    temp_dir = None
     try:
         url = validate_youtube_url(str(request.url))
         resolved = await run_in_threadpool(resolve_download, url, request.format_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail="Could not prepare this YouTube download. Inspect the link again.") from exc
-
-    filename = safe_filename(resolved["title"], resolved["format"]["ext"])
-    command = [
-        sys.executable, "-m", "yt_dlp",
-        "--ignore-config", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
-        "--no-part", "--no-cache-dir", "--remote-components", "ejs:github",
-        "-f", request.format_id,
-        "-o", "-",
-        url,
-    ]
-    try:
-        process = subprocess.Popen(
+        temp_dir = tempfile.mkdtemp(prefix="itachi-")
+        output_template = str(Path(temp_dir) / "download.%(ext)s")
+        command = [
+            sys.executable, "-m", "yt_dlp",
+            "--ignore-config", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
+            "--no-part", "--no-cache-dir", "--remote-components", "ejs:github",
+            "--merge-output-format", "mkv",
+            "-f", resolved["format_selector"],
+            "-o", output_template,
+            url,
+        ]
+        result = await run_in_threadpool(
+            subprocess.run,
             command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            bufsize=0,
+            capture_output=True,
+            text=True,
+            timeout=1800,
+            check=False,
         )
-    except OSError as exc:
-        raise HTTPException(status_code=503, detail="The download engine could not be started.") from exc
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "yt-dlp failed to create the selected format.")[-1200:]
+            raise RuntimeError(detail)
+        files = [path for path in Path(temp_dir).iterdir() if path.is_file()]
+        if not files:
+            raise RuntimeError("yt-dlp completed without producing a media file.")
+        output_file = files[0]
+        filename = safe_filename(resolved["title"], output_file.suffix.lstrip("."))
+        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
-    media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        def stream_file():
+            with output_file.open("rb") as media:
+                while True:
+                    chunk = media.read(256 * 1024)
+                    if not chunk:
+                        break
+                    yield chunk
 
-    def stream_file():
-        try:
-            assert process.stdout is not None
-            while True:
-                chunk = process.stdout.read(256 * 1024)
-                if not chunk:
-                    break
-                yield chunk
-            try:
-                process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
-        finally:
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-            if process.stdout:
-                process.stdout.close()
-
-    return StreamingResponse(
-        stream_file(),
-        media_type=media_type,
-        headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
-            "Cache-Control": "no-store",
-            "X-Content-Type-Options": "nosniff",
-        },
-    )
+        return StreamingResponse(
+            stream_file(),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
+                "Content-Length": str(output_file.stat().st_size),
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+            background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
+        )
+    except ValueError as exc:
+        if temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        raise HTTPException(status_code=422, detail=str(exc))
+    except subprocess.TimeoutExpired as exc:
+        if temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        raise HTTPException(status_code=504, detail="The media download exceeded the 30-minute processing limit.") from exc
+    except Exception as exc:
+        if temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        import logging
+        logging.getLogger("itachi.youtube").exception("YouTube download failed")
+        raise HTTPException(status_code=502, detail=f"Could not create the selected download: {str(exc)[-500:]}") from exc
 
 
 @app.post("/api/download")
