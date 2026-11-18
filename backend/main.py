@@ -16,6 +16,7 @@ from starlette.concurrency import run_in_threadpool
 
 from services.detector import inspect_url, PROVIDERS
 from services.youtube import inspect_youtube, resolve_download, safe_filename, validate_youtube_url
+from services.youtube_engines import inspect_with_fallback, download_with_engine, engine_health
 
 app = FastAPI(title="Itachi Shadow Media Vault API", version="0.2.0")
 
@@ -52,6 +53,7 @@ def health():
         "status": "ok",
         "service": "itachi-media-api",
         "components": {
+            "youtube_engines": engine_health(),
             "yt_dlp": {"available": True, "version": yt_dlp.version.__version__},
             "deno": {"available": bool(deno_path), "path": deno_path},
             "ffmpeg": {"available": bool(ffmpeg_path), "path": ffmpeg_path},
@@ -85,7 +87,7 @@ def inspect(request: InspectRequest):
 @app.post("/api/youtube/inspect")
 async def youtube_inspect(request: InspectRequest):
     try:
-        return await run_in_threadpool(inspect_youtube, str(request.url))
+        return await run_in_threadpool(inspect_with_fallback, str(request.url))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
@@ -113,27 +115,9 @@ async def youtube_download(request: YouTubeDownloadRequest):
         url = validate_youtube_url(str(request.url))
         resolved = await run_in_threadpool(resolve_download, url, request.format_id)
         temp_dir = tempfile.mkdtemp(prefix="itachi-")
-        output_template = str(Path(temp_dir) / "download.%(ext)s")
-        command = [
-            sys.executable, "-m", "yt_dlp",
-            "--ignore-config", "--no-playlist", "--quiet", "--no-warnings", "--no-progress",
-            "--no-part", "--no-cache-dir", "--remote-components", "ejs:github",
-            "--merge-output-format", "mkv",
-            "-f", resolved["format_selector"],
-            "-o", output_template,
-            url,
-        ]
-        result = await run_in_threadpool(
-            subprocess.run,
-            command,
-            capture_output=True,
-            text=True,
-            timeout=1800,
-            check=False,
+        output_file = await run_in_threadpool(
+            download_with_engine, url, resolved, temp_dir
         )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout or "yt-dlp failed to create the selected format.")[-1200:]
-            raise RuntimeError(detail)
         files = [path for path in Path(temp_dir).iterdir() if path.is_file()]
         if not files:
             raise RuntimeError("yt-dlp completed without producing a media file.")
