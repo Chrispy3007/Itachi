@@ -136,7 +136,7 @@ function getYouTubeId(url){
  if(isHost(h,["youtu.be","www.youtu.be"]))return url.pathname.split("/").filter(Boolean)[0]||null;
  if(!isHost(h,["youtube.com","www.youtube.com","m.youtube.com","music.youtube.com"]))return null;
  if(url.pathname==="/watch")return url.searchParams.get("v");
- const match=url.pathname.match(/^\\/(?:shorts|embed|live)\\/([A-Za-z0-9_-]{6,})/);
+ const match=url.pathname.match(/^\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{6,})/);
  return match?match[1]:null;
 }
 function isHost(host,domains){return domains.some(domain=>host===domain||host.endsWith("."+domain));}
@@ -195,7 +195,7 @@ function getResponseFileName(response,url){
  return safeFileName(name);
 }
 function safeFileName(name){
- return (name||"media-download").replace(/[\\/:*?"<>|\u0000-\u001f]/g,"_").slice(0,180)||"media-download";
+ return (name||"media-download").replace(/[\/:*?"<>|\u0000-\u001f]/g,"_").slice(0,180)||"media-download";
 }
 function formatBytes(bytes){
  if(!Number.isFinite(bytes)||bytes<0)return "Unknown size";
